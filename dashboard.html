@@ -1742,9 +1742,11 @@
     .profile-progress{height:8px; background:#0f1724; border-radius:99px; overflow:hidden; margin-top:8px;}
     .profile-progress span{display:block; height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2));}
     #aiScreen{position:fixed; inset:0; background:var(--bg); z-index:1200; display:none; padding:0;}
-    #aiScreen .shell{display:flex; flex-direction:column; gap:12px; height:100%; width:100vw; padding:0;}
-    .ai-layout{display:flex; gap:8px; height:100%; width:100vw; align-items:stretch;}
-    .ai-history{width:320px; background:#0f1724; border:1px solid var(--border); border-radius:12px; padding:10px 6px 10px 10px; overflow-y:auto; flex:0 0 320px; position:relative;}
+    #aiScreen .shell{display:flex; flex-direction:column; gap:16px; height:100%; width:100vw; padding:20px;}
+    #aiScreen .ai-layout{display:flex; flex:1; gap:0; height:100%; width:100%; align-items:stretch;}
+    #aiScreen .ai-history{display:none;}
+    #aiScreen #aiAnalyticsSection{display:none;}
+    #aiScreen .chat{height:100%;}
     .ai-history h4{margin-bottom:8px;}
     .ai-history button{width:100%; margin-top:8px;}
     .chat{flex:1; min-width:0;}
@@ -6395,4 +6397,3 @@ function buildTaskCardHTML(task, isLeaderView) {
 
 </body>
 </html>
-
