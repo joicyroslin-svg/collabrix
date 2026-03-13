@@ -12,7 +12,33 @@ Modern realtime task management with Kanban boards, analytics, AI assistant, and
 - 🎨 Responsive dark theme
 
 ## Screenshots
-Place screenshots in `screenshots/` and update this section with image links.
+**Landing / Overview**
+Top-level overview and entry points for tasks and teams.
+![Landing / Overview](screenshots/01-index.png)
+
+**Dashboard**
+KPIs and progress widgets for the current workspace.
+![Dashboard](screenshots/02-dashboard.png)
+
+**Kanban Board**
+Drag-and-drop workflow columns for tasks.
+![Kanban Board](screenshots/03-kanban.png)
+
+**Analytics**
+Charts and completion metrics for performance.
+![Analytics](screenshots/04-analytics.png)
+
+**Profile**
+User details and personal settings.
+![Profile](screenshots/05-profile.png)
+
+**Team Access**
+Role and membership management for teams.
+![Team Access](screenshots/06-team-access.png)
+
+**Team Code**
+Join code and team invite management.
+![Team Code](screenshots/07-team-code.png)
 
 ## Quick Start
 1. Open `index.html` in browser
