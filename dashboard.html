@@ -2199,6 +2199,8 @@
   };
   const chatSessionsKey = 'collabrix-chat-global-sessions';
   let chatSessions = [];
+  let aiTitleTimer = null;
+  let aiTitleSeq = 0;
   let currentSessionId = null;
 
   function notify(message, type = 'info', timeout = 3500){
@@ -3328,6 +3330,23 @@
     const words = firstUserMsg.text.split(' ').slice(0, 3).join(' ');
     return '🎯 ' + (words || 'New Chat');
   }
+  function scheduleSessionTitleUpdate(){
+    if(aiTitleTimer) clearTimeout(aiTitleTimer);
+    const seq = ++aiTitleSeq;
+    aiTitleTimer = setTimeout(async () => {
+      const session = chatSessions.find(s=>s.id===currentSessionId);
+      if(!session || !session.messages.length) return;
+      const title = await generateTitle(session.messages);
+      if(seq !== aiTitleSeq || !title) return;
+      if(title !== session.title){
+        session.title = title;
+        saveSessions();
+        renderHistory();
+      }
+    }, 600);
+  }
+
+
 
   function deleteSession(id){
     chatSessions = chatSessions.filter(s=>s.id!==id);
@@ -5761,6 +5780,7 @@ notify('✅ Personal task saved to your workspace!', 'success', 2500);
     }
     if(scope === 'global'){
       addGlobalMessage({ role:'ai', text });
+      scheduleSessionTitleUpdate();
     } else {
       chats[scope].push({ role:'ai', text });
       persistChat(scope);
@@ -6446,3 +6466,5 @@ function buildTaskCardHTML(task, isLeaderView) {
 
 </body>
 </html>
+
+
