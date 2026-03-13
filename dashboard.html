@@ -1742,11 +1742,38 @@
     .profile-progress{height:8px; background:#0f1724; border-radius:99px; overflow:hidden; margin-top:8px;}
     .profile-progress span{display:block; height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2));}
     #aiScreen{position:fixed; inset:0; background:var(--bg); z-index:1200; display:none; padding:0;}
-    #aiScreen .shell{display:flex; flex-direction:column; gap:16px; height:100%; width:100vw; padding:20px;}
-    #aiScreen .ai-layout{display:flex; flex:1; gap:0; height:100%; width:100%; align-items:stretch;}
-    #aiScreen .ai-history{display:none;}
+    #aiScreen .shell{display:flex; flex-direction:column; gap:16px; height:100%; width:100vw; padding:20px; position:relative;}
+    #aiScreen .ai-layout{display:flex; flex:1; gap:0; height:100%; width:100%; align-items:stretch; position:relative;}
     #aiScreen #aiAnalyticsSection{display:none;}
-    #aiScreen .chat{height:100%;}
+    #aiScreen .chat{height:100%; position:relative; z-index:0;}
+    #aiScreen .ai-history-backdrop{
+      position:absolute;
+      inset:0;
+      background: rgba(2, 8, 18, 0.55);
+      opacity:0;
+      pointer-events:none;
+      transition: opacity 0.2s ease;
+      border-radius: 18px;
+      z-index:1;
+    }
+    #aiScreen .ai-history{
+      width:320px;
+      background:#0f1724;
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:10px 6px 10px 10px;
+      overflow-y:auto;
+      position:absolute;
+      left:0;
+      top:0;
+      bottom:0;
+      transform: translateX(-115%);
+      transition: transform 0.25s ease;
+      z-index:2;
+      box-shadow: 0 18px 40px rgba(2, 8, 18, 0.45);
+    }
+    #aiScreen.ai-history-open .ai-history{transform: translateX(0);}
+    #aiScreen.ai-history-open .ai-history-backdrop{opacity:1; pointer-events:auto;}
     .ai-history h4{margin-bottom:8px;}
     .ai-history button{width:100%; margin-top:8px;}
     .chat{flex:1; min-width:0;}
@@ -2071,10 +2098,12 @@
         <h2>AI Workspace</h2>
       </div>
       <div style="display:flex; gap:8px;">
+        <button class="btn ghost" id="aiHistoryToggle" aria-pressed="false">Show History</button>
         <button class="btn ghost" id="aiBackBtn">Back to Dashboard</button>
       </div>
     </div>
     <div class="ai-layout">
+      <div class="ai-history-backdrop" id="aiHistoryBackdrop"></div>
       <div class="ai-history">
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <h4>History</h4>
@@ -5849,15 +5878,33 @@ notify('✅ Personal task saved to your workspace!', 'success', 2500);
   function closeProfile(){ qs('profilePopup').style.display = 'none'; }
   document.getElementById('profilePopup').addEventListener('click', (e)=>{ if(e.target.id==='profilePopup') closeProfile(); });
 
+  function setAiHistoryOpen(open){
+    const screen = qs('aiScreen');
+    if(!screen) return;
+    screen.classList.toggle('ai-history-open', open);
+    const toggle = qs('aiHistoryToggle');
+    if(toggle){
+      toggle.textContent = open ? 'Hide History' : 'Show History';
+      toggle.setAttribute('aria-pressed', open ? 'true' : 'false');
+    }
+  }
+  function toggleAiHistory(){
+    const screen = qs('aiScreen');
+    if(!screen) return;
+    setAiHistoryOpen(!screen.classList.contains('ai-history-open'));
+  }
+
   function openAiScreen(){
     qs('app').style.display = 'none';
     qs('aiScreen').style.display = 'flex';
+    setAiHistoryOpen(false);
     renderHistory();
     renderGlobalMessages();
     updateAiAnalytics(); // Update AI screen analytics
   }
   function closeAiScreen(){
     qs('aiScreen').style.display = 'none';
+    setAiHistoryOpen(false);
     qs('app').style.display = 'flex';
   }
 
@@ -5940,6 +5987,8 @@ notify('✅ Personal task saved to your workspace!', 'success', 2500);
   qs('globalSend').onclick = ()=>sendChat('global','globalInput','globalChatBody','globalTyping');
   qs('newSessionBtn').onclick = ()=>{ newSession(); renderHistory(); renderGlobalMessages(); };
   qs('aiBackBtn').onclick = closeAiScreen;
+  qs('aiHistoryToggle').onclick = toggleAiHistory;
+  qs('aiHistoryBackdrop').onclick = () => setAiHistoryOpen(false);
   qs('navLeader').onclick = async ()=>{ if(role !== 'Leader') return; setRoleUI(); await loadData(); };
   qs('navMember').onclick = async ()=>{ if(role !== 'Member') return; setRoleUI(); await loadData(); };
   qs('navAI').onclick = ()=>{ openAiScreen(); };
