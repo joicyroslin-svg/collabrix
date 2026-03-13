@@ -40,6 +40,10 @@ Role and membership management for teams.
 Join code and team invite management.
 ![Team Code](screenshots/07-team-code.png)
 
+**AI Assistant**
+Full-screen AI workspace with team-wide chat and history.
+![AI Assistant](screenshots/08-ai-assistant.png)
+
 ## Quick Start
 1. Open `index.html` in browser
 2. Signup → Set role & team code
@@ -47,6 +51,9 @@ Join code and team invite management.
 
 ## Supabase Setup
 Run `supabase-policies.sql` & `fix-tasks-table.sql` in SQL Editor.
+
+## AI Setup
+Set `GROQ_API_KEY` in your environment (local `.env` or hosting platform) to enable the AI assistant.
 
 ## Deploy
 - Frontend: Static hosting (Netlify/Vercel)
