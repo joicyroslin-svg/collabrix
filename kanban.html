@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Collabrix Kanban Board</title>
+  <link rel="icon" href="data:," />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet">
+  <script src="./vendor/supabase.umd.js"></script>
+  <style>
+    :root {
+      --bg: #07111a;
+      --panel: rgba(11, 22, 35, 0.88);
+      --card: rgba(19, 34, 50, 0.86);
+      --border: rgba(125, 211, 252, 0.14);
+      --text: #eef4ff;
+      --muted: #8ea4c3;
+      --accent: #5eead4;
+      --accent2: #7dd3fc;
+      --warm: #f59e0b;
+      --danger: #f87171;
+      --success: #4ade80;
+      --radius: 18px;
+      --shadow-xl: 0 28px 80px rgba(2, 8, 18, 0.42);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scrollbar-color: rgba(125, 211, 252, 0.4) transparent; }
+    body {
+      font-family: 'Inter', 'Space Grotesk', sans-serif;
+      background: 
+        radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.12) 0%, transparent 35%),
+        radial-gradient(circle at 85% 10%, rgba(6, 182, 212, 0.1) 0%, transparent 30%),
+        radial-gradient(circle at 50% 90%, rgba(16, 185, 129, 0.08) 0%, transparent 25%),
+        linear-gradient(160deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+    body::before,
+    body::after {
+      content: '';
+      position: fixed;
+      inset: auto;
+      width: 40rem;
+      height: 40rem;
+      border-radius: 999px;
+      filter: blur(100px);
+      pointer-events: none;
+      opacity: 0.25;
+      z-index: 0;
+      animation: ambientFloat 20s ease-in-out infinite alternate;
+    }
+    body::before {
+      top: -12rem;
+      right: -12rem;
+      background: rgba(99, 102, 241, 0.15);
+    }
+    body::after {
+      bottom: -14rem;
+      left: -14rem;
+      background: rgba(6, 182, 212, 0.12);
+      animation-duration: 25s;
+    }
+    @keyframes ambientFloat {
+      from { transform: translate3d(0, 0, 0) scale(1); }
+      to { transform: translate3d(24px, -18px, 0) scale(1.08); }
+    }
+    a { color: inherit; }
+    .app {
+      display: flex;
+      min-height: calc(100vh - 32px);
+      width: min(1480px, calc(100% - 32px));
+      margin: 16px auto;
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      border-radius: 28px;
+      background: rgba(15, 23, 42, 0.75);
+      box-shadow: var(--shadow-xl);
+      backdrop-filter: blur(20px);
+      overflow: hidden;
+      position: relative;
+      z-index: 1;
+    }
+    .app::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(115deg, rgba(99, 102, 241, 0.06), transparent 24%),
+        radial-gradient(circle at 75% 18%, rgba(6, 182, 212, 0.1), transparent 28%);
+      pointer-events: none;
+    }
+    .sidebar {
+      width: 260px;
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.95), rgba(8, 15, 28, 0.95));
+      border-right: 1px solid rgba(99, 102, 241, 0.15);
+      padding: 22px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      position: relative;
+      z-index: 1;
+    }
+    .sidebar::before {
+      content: '';
+      position: absolute;
+      inset: 0 0 auto;
+      height: 180px;
+      background: radial-gradient(circle at top, rgba(99, 102, 241, 0.2), transparent 68%);
+      pointer-events: none;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      padding: 14px 16px;
+      border-radius: 18px;
+      border: 1px solid rgba(125, 211, 252, 0.14);
+      background: rgba(10, 24, 37, 0.75);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+    .brand-dot {
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: grid;
+      place-items: center;
+      color: #031018;
+      font-weight: 800;
+      box-shadow: 0 12px 26px rgba(94, 234, 212, 0.28);
+    }
+    .nav { display: flex; flex-direction: column; gap: 8px; }
+    .nav button {
+      border: 1px solid transparent;
+      background: rgba(9, 20, 31, 0.5);
+      color: var(--text);
+      padding: 12px 14px;
+      border-radius: 14px;
+      text-align: left;
+      cursor: pointer;
+      transition: 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .nav button::before {
+      content: '';
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 3px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, var(--accent), var(--accent2));
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    .nav button.active,
+    .nav button:hover {
+      background: rgba(125, 211, 252, 0.1);
+      border-color: rgba(125, 211, 252, 0.22);
+      transform: translateX(2px);
+    }
+    .nav button.active::before,
+    .nav button:hover::before { opacity: 1; }
+    .profile-mini {
+      margin-top: auto;
+      border: 1px solid rgba(125, 211, 252, 0.14);
+      border-radius: 18px;
+      padding: 14px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      cursor: pointer;
+      background: linear-gradient(180deg, rgba(10, 24, 37, 0.84), rgba(9, 18, 29, 0.7));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .profile-mini:hover { transform: translateY(-1px); border-color: rgba(94, 234, 212, 0.28); }
+    .logout-btn { margin-top: 10px; border: 1px solid rgba(248,113,113,0.4); background: rgba(248,113,113,0.1); color: #fecaca; padding: 10px 12px; border-radius: 10px; cursor: pointer; font-weight: 600; }
+    .logout-btn:hover { background: rgba(248,113,113,0.18); }
+    .avatar { width: 46px; height: 46px; border-radius: 16px; background: linear-gradient(135deg, #f59e0b, #fb7185); display: grid; place-items: center; font-weight: 700; color: #0c1118; box-shadow: 0 12px 20px rgba(245, 158, 11, 0.25); }
+    .main {
+      flex: 1;
+      padding: 26px 30px 30px;
+      position: relative;
+      z-index: 1;
+      overflow: auto;
+    }
+    .main::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 12% 16%, rgba(94, 234, 212, 0.07), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(125, 211, 252, 0.07), transparent 26%);
+      pointer-events: none;
+    }
+    .main > * { position: relative; z-index: 1; }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      padding: 20px 22px;
+      border-radius: 24px;
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(30, 41, 59, 0.72));
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+    }
+    .badge {
+      padding: 9px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      background: rgba(99, 102, 241, 0.15);
+      color: #a5b4fc;
+      font-weight: 600;
+      font-size: 13px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+    .muted { color: var(--muted); font-size: 13px; }
+
+    /* Kanban Page Header */
+    .kanban-page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+    }
+    .kanban-page-title {
+      font-size: 28px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .kanban-page-subtitle {
+      font-size: 14px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    .back-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(9, 20, 31, 0.5);
+      color: var(--text);
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+    .back-btn:hover {
+      border-color: var(--accent);
+      transform: translateX(-2px);
+    }
+
+    /* ==================== KANBAN BOARD STYLES ==================== */
+    .kanban-section {
+      margin-top: 24px;
+    }
+    .kanban-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .kanban-title {
+      font-size: 20px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #f1f5f9;
+    }
+    .kanban-board {
+      display: flex;
+      gap: 20px;
+      overflow-x: auto;
+      padding-bottom: 16px;
+    }
+    .kanban-column {
+      flex: 0 0 320px;
+      min-width: 280px;
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.7), rgba(8, 15, 28, 0.5));
+      border: 1px solid rgba(99, 102, 241, 0.15);
+      border-radius: 16px;
+      padding: 16px;
+      min-height: 500px;
+      max-height: 700px;
+      display: flex;
+      flex-direction: column;
+    }
+    .kanban-column-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(99, 102, 241, 0.15);
+    }
+    .kanban-column-title {
+      font-size: 15px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .kanban-column-title.todo {
+      color: #94a3b8;
+    }
+    .kanban-column-title.inprogress {
+      color: #fbbf24;
+    }
+    .kanban-column-title.completed {
+      color: #22c55e;
+    }
+    .kanban-count {
+      background: rgba(99, 102, 241, 0.2);
+      color: #a5b4fc;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .kanban-task-list {
+      flex: 1;
+      overflow-y: auto;
+      min-height: 200px;
+      padding: 4px;
+    }
+    .kanban-task-list.drag-over {
+      background: rgba(99, 102, 241, 0.08);
+      border-radius: 12px;
+    }
+    .kanban-task-card {
+      background: linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.85));
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 12px;
+      cursor: grab;
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .kanban-task-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #6366f1, #06b6d4);
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+    .kanban-task-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35), 0 0 20px rgba(99, 102, 241, 0.15);
+      border-color: rgba(99, 102, 241, 0.4);
+    }
+    .kanban-task-card:hover::before {
+      opacity: 1;
+    }
+    .kanban-task-card.dragging {
+      opacity: 0.5;
+      transform: rotate(3deg) scale(1.02);
+      cursor: grabbing;
+    }
+    .kanban-task-card.completed {
+      opacity: 0.7;
+    }
+    .kanban-task-card.completed:hover {
+      opacity: 1;
+    }
+    .kanban-task-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #f1f5f9;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+    .kanban-task-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 12px;
+      color: #94a3b8;
+    }
+    .kanban-task-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .kanban-task-meta-label {
+      font-weight: 600;
+      color: #64748b;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .kanban-task-priority {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .kanban-task-priority.high {
+      background: rgba(244, 63, 94, 0.2);
+      color: #fb7185;
+    }
+    .kanban-task-priority.medium {
+      background: rgba(251, 191, 36, 0.2);
+      color: #fbbf24;
+    }
+    .kanban-task-priority.low {
+      background: rgba(99, 102, 241, 0.2);
+      color: #a5b4fc;
+    }
+    .kanban-empty {
+      text-align: center;
+      padding: 32px 16px;
+      color: #64748b;
+      font-size: 13px;
+    }
+    .kanban-empty-icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+      opacity: 0.5;
+    }
+    /* Priority indicator stripe on card */
+    .kanban-task-card.priority-high {
+      border-left: 3px solid #fb7185;
+    }
+    .kanban-task-card.priority-medium {
+      border-left: 3px solid #fbbf24;
+    }
+    .kanban-task-card.priority-low {
+      border-left: 3px solid #a5b4fc;
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+    .empty-state-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    /* Loading */
+    .loading-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-weight: 600;
+      font-size: 18px;
+    }
+
+    /* Notification */
+    .app-notice {
+      display: none;
+      margin-bottom: 14px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      font-size: 13px;
+      backdrop-filter: blur(14px);
+    }
+    .app-notice.show {
+      display: block;
+    }
+    .app-notice.info { background: rgba(96,165,250,0.08); color: #bfdbfe; border-color: rgba(96,165,250,0.35); }
+    .app-notice.success { background: rgba(74,222,128,0.1); color: #bbf7d0; border-color: rgba(74,222,128,0.35); }
+    .app-notice.warn { background: rgba(251,191,36,0.1); color: #fde68a; border-color: rgba(251,191,36,0.35); }
+    .app-notice.error { background: rgba(248,113,113,0.1); color: #fecaca; border-color: rgba(248,113,113,0.35); }
+
+    @media(max-width: 900px) {
+      .app { flex-direction: column; }
+      .sidebar { width: 100%; flex-direction: row; align-items: center; gap: 12px; }
+      .nav { flex-direction: row; flex-wrap: wrap; }
+      .nav button { flex: 1; }
+      .main { padding: 18px; }
+      .kanban-board { flex-direction: column; }
+      .kanban-column { flex: 1; min-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+<div id="loading" class="loading-container">Loading Kanban Board...</div>
+
+<div class="app" id="app" style="display:none;">
+  <aside class="sidebar">
+    <div class="brand"><div class="brand-dot">CX</div><div>Collabrix</div></div>
+    <div class="nav">
+      <button id="navDashboard" onclick="goToDashboard()">Dashboard</button>
+      <button id="navAnalytics" onclick="goToAnalytics()">Analytics</button>
+      <button id="navKanban" class="active">Kanban Board</button>
+    </div>
+    <div class="profile-mini" onclick="openProfile()">
+      <div class="avatar" id="avatar">U</div>
+      <div>
+        <div id="miniName">User</div>
+        <div class="muted" id="miniRole">Role</div>
+      </div>
+    </div>
+    <button id="logoutBtn" class="logout-btn" type="button">Logout</button>
+  </aside>
+
+  <main class="main">
+    <div class="app-notice" id="appNotice"></div>
+
+    <!-- Kanban Page Header -->
+    <div class="kanban-page-header">
+      <div>
+        <h1 class="kanban-page-title">📋 Kanban Board</h1>
+        <p class="kanban-page-subtitle">Drag and drop tasks between columns to update their status</p>
+      </div>
+      <button class="back-btn" onclick="goToDashboard()">
+        <span>←</span> Back to Dashboard
+      </button>
+    </div>
+
+    <!-- Role Badge -->
+    <div class="header" style="margin-bottom: 24px;">
+      <div>
+        <div class="muted" style="font-size:12px;">Kanban Overview</div>
+        <h2 id="pageTitle">My Tasks</h2>
+      </div>
+      <div class="badge" id="roleBadge">Role</div>
+    </div>
+
+    <!-- Kanban Board Section -->
+    <div class="kanban-section">
+      <div class="kanban-header">
+        <div class="kanban-title">
+          <span>📋</span>
+          <span id="kanbanTitle">My Kanban Board</span>
+        </div>
+      </div>
+      <div class="kanban-board">
+        <div class="kanban-column" id="kanbanTodo">
+          <div class="kanban-column-header">
+            <div class="kanban-column-title todo">
+              <span>📝</span> To Do
+            </div>
+            <span class="kanban-count" id="todoCount">0</span>
+          </div>
+          <div class="kanban-task-list" data-status="todo" id="kanbanTodoList"></div>
+        </div>
+        <div class="kanban-column" id="kanbanInProgress">
+          <div class="kanban-column-header">
+            <div class="kanban-column-title inprogress">
+              <span>🔄</span> In Progress
+            </div>
+            <span class="kanban-count" id="inProgressCount">0</span>
+          </div>
+          <div class="kanban-task-list" data-status="inprogress" id="kanbanInProgressList"></div>
+        </div>
+        <div class="kanban-column" id="kanbanCompleted">
+          <div class="kanban-column-header">
+            <div class="kanban-column-title completed">
+              <span>✅</span> Completed
+            </div>
+            <span class="kanban-count" id="completedCount">0</span>
+          </div>
+          <div class="kanban-task-list" data-status="completed" id="kanbanCompletedList"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  let supabaseClient = null;
+  let currentUser = null;
+  let role = 'Member';
+  let teamCode = '';
+  let allTasks = [];
+
+  const IST_TIME_ZONE = 'Asia/Kolkata';
+
+  function qs(id) { return document.getElementById(id); }
+
+  function notify(message, type = 'info', timeout = 3500) {
+    const el = qs('appNotice');
+    if (!el) return;
+    if (noticeTimer) {
+      clearTimeout(noticeTimer);
+      noticeTimer = null;
+    }
+    if (!message) {
+      el.textContent = '';
+      el.className = 'app-notice hidden';
+      return;
+    }
+    const safeType = ['info', 'success', 'warn', 'error'].includes(type) ? type : 'info';
+    el.textContent = message;
+    el.className = `app-notice show ${safeType}`;
+    if (timeout > 0) {
+      noticeTimer = setTimeout(() => {
+        el.textContent = '';
+        el.className = 'app-notice hidden';
+      }, timeout);
+    }
+  }
+
+  let noticeTimer = null;
+
+  function setLoading(state) {
+    qs('loading').style.display = state ? 'flex' : 'none';
+    qs('app').style.display = state ? 'none' : 'flex';
+  }
+
+  function goToDashboard() {
+    window.location.href = 'dashboard.html';
+  }
+
+  function goToAnalytics() {
+    window.location.href = 'analytics.html';
+  }
+
+  function openProfile() {
+    window.location.href = 'profile.html';
+  }
+
+  async function logout() {
+    try {
+      if (supabaseClient && supabaseClient.auth) {
+        await supabaseClient.auth.signOut();
+      }
+    } catch (err) {
+      console.warn('logout failed', err);
+    }
+    window.location.href = 'index.html';
+  }
+
+  function normalizeTaskRow(raw) {
+    if (!raw) return null;
+    const explicitStatus = raw.status || raw.task_status || raw.state || null;
+    const completedFlag = raw.is_completed || raw.completed || raw.done || null;
+    const normalizedStatus = explicitStatus || (completedFlag === true ? 'Completed' : 'Pending');
+    return {
+      id: raw.id || '',
+      title: raw.title || raw.task_title || raw.name || 'Untitled',
+      description: raw.description || raw.task_description || raw.details || raw.notes || '',
+      status: normalizedStatus,
+      deadline: raw.deadline || raw.due_date || raw.target_date || null,
+      assigned_to: raw.assigned_to || raw.user_id || raw.assignee_id || null,
+      user_id: raw.user_id || raw.assigned_to || raw.assignee_id || null,
+      created_by: raw.created_by || raw.creator_id || raw.owner_id || null,
+      created_at: raw.created_at || raw.inserted_at || null,
+      profiles: raw.profiles || null
+    };
+  }
+
+  function parseDeadlineValue(deadline) {
+    if (!deadline) return null;
+    if (deadline instanceof Date) {
+      return Number.isNaN(deadline.getTime()) ? null : deadline;
+    }
+    const raw = String(deadline).trim();
+    if (!raw) return null;
+
+    let normalized = raw.replace(' ', 'T');
+    if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+      normalized = `${normalized}T00:00:00+05:30`;
+    }
+
+    let parsed = new Date(normalized);
+    if (!Number.isNaN(parsed.getTime())) return parsed;
+
+    parsed = new Date(raw);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  // Get priority based on deadline
+  function getTaskPriority(deadline) {
+    if (!deadline) return 'low';
+    const deadlineDate = parseDeadlineValue(deadline);
+    if (!deadlineDate) return 'low';
+    const diffMs = deadlineDate.getTime() - Date.now();
+    const diffHours = diffMs / (1000 * 60 * 60);
+    if (diffHours <= 24) return 'high';
+    if (diffHours <= 72) return 'medium';
+    return 'low';
+  }
+
+  // Format deadline for display in Kanban cards
+  function formatKanbanDeadline(deadline) {
+    if (!deadline) return 'No deadline';
+    const deadlineDate = parseDeadlineValue(deadline);
+    if (!deadlineDate) return 'No deadline';
+    try {
+      const parts = new Intl.DateTimeFormat('en-IN', {
+        timeZone: IST_TIME_ZONE,
+        day: '2-digit',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      }).formatToParts(deadlineDate);
+      const getPart = (type) => {
+        const match = parts.find(p => p.type === type);
+        return match ? match.value : '';
+      };
+      return `${getPart('day')} ${getPart('month')}, ${getPart('hour')}:${getPart('minute')} ${getPart('dayPeriod').toUpperCase()}`;
+    } catch (e) {
+      return 'No deadline';
+    }
+  }
+
+  // Create HTML for a Kanban task card
+  function createKanbanTaskCard(task) {
+    const priority = getTaskPriority(task.deadline);
+    const isCompleted = task.status === 'Completed';
+    const card = document.createElement('div');
+    card.className = `kanban-task-card priority-${priority}${isCompleted ? ' completed' : ''}`;
+    card.draggable = true;
+    card.dataset.taskId = task.id;
+    card.dataset.status = task.status;
+    
+    card.innerHTML = `
+      <div class="kanban-task-title">${task.title || 'Untitled'}</div>
+      <div class="kanban-task-meta">
+        <div class="kanban-task-meta-item">
+          <span class="kanban-task-meta-label">Assigned:</span>
+          <span>${task.assignee_name || task.profiles?.full_name || 'Unassigned'}</span>
+        </div>
+        <div class="kanban-task-meta-item">
+          <span class="kanban-task-meta-label">Deadline:</span>
+          <span>${formatKanbanDeadline(task.deadline)}</span>
+        </div>
+        <div class="kanban-task-meta-item">
+          <span class="kanban-task-priority ${priority}">${priority} priority</span>
+        </div>
+      </div>
+    `;
+    
+    // Add drag event listeners
+    card.addEventListener('dragstart', handleKanbanDragStart);
+    card.addEventListener('dragend', handleKanbanDragEnd);
+    
+    return card;
+  }
+
+  // Render Kanban board
+  function renderKanban() {
+    const todoList = qs('kanbanTodoList');
+    const inProgressList = qs('kanbanInProgressList');
+    const completedList = qs('kanbanCompletedList');
+    
+    if (!todoList || !inProgressList || !completedList) return;
+    
+    // Clear existing cards
+    todoList.innerHTML = '';
+    inProgressList.innerHTML = '';
+    completedList.innerHTML = '';
+    
+    const tasks = allTasks || [];
+    
+    let todoCount = 0;
+    let inProgressCount = 0;
+    let completedCount = 0;
+    
+    tasks.forEach(task => {
+      const status = (task.status || 'Pending').toLowerCase();
+      let targetList;
+      
+      if (status === 'completed') {
+        targetList = completedList;
+        completedCount++;
+      } else if (status === 'in progress' || status === 'inprogress') {
+        targetList = inProgressList;
+        inProgressCount++;
+      } else {
+        targetList = todoList;
+        todoCount++;
+      }
+      
+      const card = createKanbanTaskCard(task);
+      targetList.appendChild(card);
+    });
+    
+    // Update counts
+    qs('todoCount').textContent = todoCount;
+    qs('inProgressCount').textContent = inProgressCount;
+    qs('completedCount').textContent = completedCount;
+    
+    // Show empty state messages
+    if (todoCount === 0) {
+      todoList.innerHTML = '<div class="kanban-empty"><div class="kanban-empty-icon">📝</div>No tasks in To Do</div>';
+    }
+    if (inProgressCount === 0) {
+      inProgressList.innerHTML = '<div class="kanban-empty"><div class="kanban-empty-icon">🔄</div>No tasks in Progress</div>';
+    }
+    if (completedCount === 0) {
+      completedList.innerHTML = '<div class="kanban-empty"><div class="kanban-empty-icon">✅</div>No completed tasks</div>';
+    }
+    
+    // Initialize drag and drop
+    initKanbanDragDrop();
+  }
+
+  // Drag and drop event handlers
+  let draggedCard = null;
+  
+  function handleKanbanDragStart(e) {
+    draggedCard = e.target;
+    e.target.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', e.target.dataset.taskId);
+  }
+  
+  function handleKanbanDragEnd(e) {
+    e.target.classList.remove('dragging');
+    document.querySelectorAll('.kanban-task-list').forEach(list => {
+      list.classList.remove('drag-over');
+    });
+    draggedCard = null;
+  }
+  
+  function handleKanbanDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const list = e.target.closest('.kanban-task-list');
+    if (list) {
+      list.classList.add('drag-over');
+    }
+  }
+  
+  function handleKanbanDragLeave(e) {
+    const list = e.target.closest('.kanban-task-list');
+    if (list && !list.contains(e.relatedTarget)) {
+      list.classList.remove('drag-over');
+    }
+  }
+  
+  async function handleKanbanDrop(e) {
+    e.preventDefault();
+    const list = e.target.closest('.kanban-task-list');
+    if (!list || !draggedCard) return;
+    
+    list.classList.remove('drag-over');
+    
+    const newStatus = list.dataset.status;
+    const taskId = draggedCard.dataset.taskId;
+    
+    if (!taskId || !newStatus) return;
+    
+    // Map status to proper format for database
+    let statusForDb;
+    if (newStatus === 'todo') statusForDb = 'Pending';
+    else if (newStatus === 'inprogress') statusForDb = 'In Progress';
+    else if (newStatus === 'completed') statusForDb = 'Completed';
+    else statusForDb = 'Pending';
+    
+    // Normalize status for comparison
+    const normalizeStatus = (s) => {
+      if (!s) return 'Pending';
+      const lower = String(s).toLowerCase();
+      if (lower === 'completed') return 'Completed';
+      if (lower === 'in progress' || lower === 'inprogress') return 'In Progress';
+      return 'Pending';
+    };
+    
+    const currentStatus = normalizeStatus(draggedCard.dataset.status);
+    const newStatusNormalized = normalizeStatus(statusForDb);
+    
+    if (currentStatus !== newStatusNormalized) {
+      // Update status in Supabase
+      const success = await updateTaskStatus(taskId, statusForDb);
+      
+      if (success) {
+        notify(`✅ Task moved to ${statusForDb}!`, 'success', 2000);
+        // Refresh the board
+        renderKanban();
+      }
+    }
+  }
+  
+  // Initialize drag and drop
+  function initKanbanDragDrop() {
+    const todoList = qs('kanbanTodoList');
+    const inProgressList = qs('kanbanInProgressList');
+    const completedList = qs('kanbanCompletedList');
+    
+    [todoList, inProgressList, completedList].forEach(list => {
+      if (!list) return;
+      
+      list.removeEventListener('dragover', handleKanbanDragOver);
+      list.removeEventListener('dragleave', handleKanbanDragLeave);
+      list.removeEventListener('drop', handleKanbanDrop);
+      
+      list.addEventListener('dragover', handleKanbanDragOver);
+      list.addEventListener('dragleave', handleKanbanDragLeave);
+      list.addEventListener('drop', handleKanbanDrop);
+    });
+  }
+
+  // Update task status in Supabase
+  async function updateTaskStatus(taskId, newStatus) {
+    if (!supabaseClient) return false;
+    if (!taskId) {
+      notify('Invalid task id.', 'error');
+      return false;
+    }
+    
+    const validStatuses = ['Pending', 'In Progress', 'Completed'];
+    if (!validStatuses.includes(newStatus)) {
+      notify('Invalid status value.', 'error');
+      return false;
+    }
+    
+    try {
+      const { error } = await supabaseClient
+        .from('tasks')
+        .update({ status: newStatus })
+        .eq('id', taskId);
+      
+      if (error) {
+        console.error('Failed to update task status:', error);
+        notify('Could not update task status.', 'error', 3000);
+        return false;
+      }
+      
+      // Update local task list
+      const taskIndex = allTasks.findIndex(t => String(t.id) === String(taskId));
+      if (taskIndex >= 0) {
+        allTasks[taskIndex].status = newStatus;
+      }
+      
+      return true;
+    } catch (err) {
+      console.error('updateTaskStatus error:', err);
+      notify('Failed to update status.', 'error', 3000);
+      return false;
+    }
+  }
+
+  function updateUI() {
+    const isLeader = role === 'Leader';
+    qs('kanbanTitle').textContent = isLeader ? 'Team Kanban Board' : 'My Kanban Board';
+    qs('pageTitle').textContent = isLeader ? 'Team Tasks' : 'My Tasks';
+    qs('roleBadge').textContent = teamCode ? `${role} • ${teamCode}` : role;
+    renderKanban();
+  }
+
+  async function fetchTasks() {
+    if (!supabaseClient || !currentUser) return;
+
+    let rows = [];
+
+    if (role === 'Member') {
+      // Members fetch only their assigned tasks
+      const { data: assignedData } = await supabaseClient
+        .from('tasks')
+        .select('*')
+        .eq('assigned_to', currentUser.id);
+
+      const { data: userIdData } = await supabaseClient
+        .from('tasks')
+        .select('*')
+        .eq('user_id', currentUser.id);
+
+      if (assignedData) rows = assignedData;
+      if (userIdData) {
+        const existingIds = new Set(rows.map(t => t.id));
+        userIdData.forEach(t => {
+          if (!existingIds.has(t.id)) rows.push(t);
+        });
+      }
+    } else {
+      // Leaders fetch all tasks
+      const { data } = await supabaseClient
+        .from('tasks')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (data) rows = data;
+    }
+
+    allTasks = rows.map(normalizeTaskRow).filter(Boolean);
+
+    // Deduplicate by ID
+    const seenIds = new Set();
+    allTasks = allTasks.filter(t => {
+      const id = String(t.id);
+      if (seenIds.has(id)) return false;
+      seenIds.add(id);
+      return true;
+    });
+
+    // Add assignee names
+    const nameMap = new Map();
+    allTasks.forEach(t => {
+      if (t.assigned_to && t.profiles?.full_name) {
+        nameMap.set(t.assigned_to, t.profiles.full_name);
+      }
+      if (t.user_id && t.profiles?.full_name) {
+        nameMap.set(t.user_id, t.profiles.full_name);
+      }
+    });
+    allTasks = allTasks.map(t => ({
+      ...t,
+      assignee_name: t.profiles?.full_name || nameMap.get(t.assigned_to || t.user_id) || ((t.assigned_to || t.user_id) ? 'Member' : 'Unassigned')
+    }));
+
+    updateUI();
+  }
+
+  async function init() {
+    try {
+      // Initialize Supabase
+      if (!window.supabase || !window.supabase.createClient) {
+        qs('loading').textContent = 'Supabase SDK failed to load. Check your internet connection.';
+        return;
+      }
+
+      supabaseClient = window.supabase.createClient(
+        "https://xvjxbmdkczopeflajvjl.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2anhibWRrY3pvcGVmbGFqdmpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxOTI4OTEsImV4cCI6MjA4Nzc2ODg5MX0.JY5eYIpOjoqU01n1o4YylZo5A8TXmyqE0BMcquElnzY"
+      );
+
+      // Get current user
+      const { data: { user }, error } = await supabaseClient.auth.getUser();
+      if (error || !user) {
+        window.location.href = 'index.html';
+        return;
+      }
+
+      currentUser = user;
+
+      // Get profile
+      const { data: profile } = await supabaseClient
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      // Get role from localStorage first (set during signup/team-access)
+      let roleFromStorage = localStorage.getItem('profileRole') || localStorage.getItem('profileJobRole') || '';
+      
+      // Fallback to profile data
+      if (!roleFromStorage && profile) {
+        roleFromStorage = profile.job_role || profile.role || '';
+      }
+
+      role = roleFromStorage.toLowerCase() === 'leader' ? 'Leader' : 'Member';
+
+      // Get team code
+      const storedTeamCode = localStorage.getItem('profileTeamCode') || localStorage.getItem('profileCompany') || '';
+      const profileCompany = profile?.company || profile?.team_code || '';
+      teamCode = storedTeamCode || profileCompany;
+
+      // Update UI
+      const name = localStorage.getItem('profileName') || profile?.full_name || user.email?.split('@')[0] || 'User';
+      qs('avatar').textContent = name.charAt(0).toUpperCase();
+      qs('miniName').textContent = name;
+      qs('miniRole').textContent = role;
+
+      // Fetch tasks and show Kanban
+      await fetchTasks();
+
+      setLoading(false);
+    } catch (err) {
+      console.error('Kanban init failed', err);
+      qs('loading').textContent = 'Error loading Kanban board. Check console/network.';
+    }
+  }
+
+  // Event listeners
+qs('logoutBtn').addEventListener('click', logout);
+
+window.goToDashboard = () => window.location.href = 'dashboard.html';
+window.goToAnalytics = () => window.location.href = 'analytics.html';
+
+  // Initialize on load
+  init();
+</script>
+
+</body>
+</html>
+

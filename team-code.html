@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leader Team Code - Collabrix</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #06121d;
+      --panel: rgba(10, 22, 35, 0.84);
+      --border: rgba(125, 211, 252, 0.16);
+      --text: #edf5ff;
+      --muted: #97abc8;
+      --accent: #5eead4;
+      --accent2: #7dd3fc;
+      --danger: #f87171;
+      --ok: #4ade80;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at 14% 18%, rgba(94,234,212,0.14), transparent 30%),
+        radial-gradient(circle at 84% 4%, rgba(125,211,252,0.18), transparent 34%),
+        radial-gradient(circle at 72% 84%, rgba(245,158,11,0.08), transparent 20%),
+        linear-gradient(160deg, #07111a, var(--bg));
+      color: var(--text);
+      font-family: 'Space Grotesk', sans-serif;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    body::before,
+    body::after {
+      content: '';
+      position: fixed;
+      width: 28rem;
+      height: 28rem;
+      border-radius: 999px;
+      filter: blur(82px);
+      pointer-events: none;
+      opacity: 0.35;
+      animation: drift 18s ease-in-out infinite alternate;
+    }
+    body::before { top: -10rem; right: -10rem; background: rgba(125, 211, 252, 0.16); }
+    body::after { bottom: -12rem; left: -12rem; background: rgba(94, 234, 212, 0.14); animation-duration: 24s; }
+    .card {
+      width: 440px;
+      max-width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      background: linear-gradient(180deg, rgba(10, 24, 39, 0.9), rgba(8, 18, 30, 0.78));
+      padding: 30px;
+      box-shadow: 0 26px 80px rgba(0,0,0,0.42);
+      backdrop-filter: blur(18px);
+      position: relative;
+      overflow: hidden;
+      animation: floatIn 0.65s ease-out both;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 0 0 auto;
+      height: 2px;
+      background: linear-gradient(90deg, rgba(94, 234, 212, 0), rgba(94, 234, 212, 0.9), rgba(125, 211, 252, 0));
+    }
+    h1 { margin: 0 0 8px; font-size: 30px; }
+    .sub { margin: 0 0 18px; color: var(--muted); font-size: 13px; line-height: 1.35; }
+    label { display: block; margin-bottom: 8px; color: var(--muted); font-size: 13px; }
+    .code-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+    }
+    input {
+      width: 100%;
+      background: #101725;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 14px;
+      padding: 12px;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+    }
+    input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(45,212,191,0.15);
+      transform: translateY(-1px);
+    }
+    .mini-btn {
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      border-radius: 10px;
+      padding: 11px 12px;
+      cursor: pointer;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .mini-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .primary, .ghost {
+      border: none;
+      border-radius: 10px;
+      padding: 11px 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .primary {
+      color: #031017;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+    }
+    .ghost {
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+    }
+    .ghost:hover { border-color: var(--accent); color: var(--accent); }
+    #message {
+      margin-top: 14px;
+      min-height: 18px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .hint {
+      margin-top: 12px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    @keyframes drift {
+      from { transform: translate3d(0, 0, 0) scale(1); }
+      to { transform: translate3d(24px, -18px, 0) scale(1.08); }
+    }
+    @keyframes floatIn {
+      from { opacity: 0; transform: translateY(24px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Leader Team Code</h1>
+    <p class="sub">Leader-only page to create and manage the team code for members.</p>
+
+    <label for="teamCodeInput">Team Code</label>
+    <div class="code-row">
+      <input id="teamCodeInput" placeholder="TEAM-AB12CD">
+      <button class="mini-btn" id="generateBtn" type="button">Generate</button>
+    </div>
+
+    <div class="actions">
+      <button class="primary" id="saveBtn" type="button">Save Team Code</button>
+      <button class="ghost" id="copyBtn" type="button">Copy Code</button>
+    </div>
+
+    <div class="actions">
+      <button class="ghost" id="backProfileBtn" type="button">Back to Profile</button>
+      <button class="ghost" id="backDashboardBtn" type="button">Go to Dashboard</button>
+    </div>
+
+    <p id="message"></p>
+    <div class="hint">Share this exact code with members. Members must enter this at login.</div>
+  </div>
+
+  <script src="./vendor/supabase.umd.js"></script>
+  <script src="./supabase.js"></script>
+  <script>
+    const supabaseClient = window.supabase;
+    const TEAM_CODE_DRAFT_KEY = 'collabrix-team-code-draft';
+    const LEADER_INTENT_KEY = 'collabrix-leader-intent';
+    let activeUser = null;
+
+    function normalizeRole(value) {
+      return String(value || '').toLowerCase() === 'leader' ? 'Leader' : 'Member';
+    }
+
+    function normalizeTeamCode(raw) {
+      return String(raw || '')
+        .toUpperCase()
+        .replace(/[^A-Z0-9-_]/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '')
+        .slice(0, 20);
+    }
+
+    function setMessage(text, color) {
+      const el = document.getElementById('message');
+      if (!el) return;
+      el.style.color = color || 'var(--muted)';
+      el.textContent = text || '';
+    }
+
+    function setBusy(flag) {
+      const saveBtn = document.getElementById('saveBtn');
+      if (saveBtn) saveBtn.disabled = !!flag;
+    }
+
+    function setInputsEnabled(enabled) {
+      const ids = ['teamCodeInput', 'generateBtn', 'saveBtn', 'copyBtn'];
+      ids.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.disabled = !enabled;
+      });
+    }
+
+    function generateTeamCode() {
+      const random = Math.random().toString(36).slice(2, 8).toUpperCase();
+      const code = normalizeTeamCode('TEAM-' + random);
+      document.getElementById('teamCodeInput').value = code;
+    }
+
+    async function enforceLeader() {
+      if (!supabaseClient) {
+        setMessage('Supabase not available. Refresh and try again.', 'var(--danger)');
+        setInputsEnabled(false);
+        return false;
+      }
+
+      const userRes = await supabaseClient.auth.getUser();
+      const user = userRes?.data?.user || null;
+      if (!user || !user.id) {
+        window.location.href = 'index.html';
+        return false;
+      }
+      activeUser = user;
+
+      const profileRes = await supabaseClient
+        .from('profiles')
+        .select('id, role, job_role, company, full_name')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      const profile = profileRes?.data || null;
+      const dbRole = normalizeRole(profile?.role || profile?.job_role || '');
+      const localRole = normalizeRole(localStorage.getItem('profileRole') || localStorage.getItem('profileJobRole'));
+      const hasLeaderIntent = localStorage.getItem(LEADER_INTENT_KEY) === '1';
+      const canUseManager = dbRole === 'Leader' || localRole === 'Leader' || hasLeaderIntent;
+      if (!canUseManager) {
+        setInputsEnabled(false);
+        setMessage('Access denied. Only leaders can manage team code. Set role to Leader in profile first.', 'var(--danger)');
+        return false;
+      }
+
+      localStorage.setItem('profileRole', 'Leader');
+      localStorage.setItem('profileJobRole', 'Leader');
+      if (user.email) localStorage.setItem('profileEmail', user.email);
+      localStorage.setItem('profileUserId', user.id);
+      const code = normalizeTeamCode(
+        profile?.company ||
+        localStorage.getItem('profileTeamCode') ||
+        localStorage.getItem(TEAM_CODE_DRAFT_KEY)
+      );
+      if (code) {
+        document.getElementById('teamCodeInput').value = code;
+        localStorage.setItem(TEAM_CODE_DRAFT_KEY, code);
+      }
+      setInputsEnabled(true);
+      return true;
+    }
+
+    async function saveTeamCode() {
+      const codeInput = document.getElementById('teamCodeInput');
+      const code = normalizeTeamCode(codeInput.value || '');
+      codeInput.value = code;
+      if (!code) {
+        setMessage('Team code is required.', 'var(--danger)');
+        return;
+      }
+      if (!activeUser || !activeUser.id) {
+        setMessage('Session missing. Login again.', 'var(--danger)');
+        return;
+      }
+
+      setBusy(true);
+      try {
+        const nameFallback = localStorage.getItem('profileName') || activeUser.email?.split('@')[0] || 'Leader';
+        const payload = {
+          id: activeUser.id,
+          full_name: nameFallback,
+          role: 'Leader',
+          job_role: 'Leader',
+          company: code
+        };
+
+        try {
+          await supabaseClient.from('profiles').insert([payload]);
+        } catch (insertError) {
+          try {
+            await supabaseClient.from('profiles').update(payload).eq('id', activeUser.id);
+          } catch (updateError) {
+            console.warn('DB save skipped', updateError);
+          }
+        }
+
+        localStorage.setItem('profileRole', 'Leader');
+        localStorage.setItem('profileJobRole', 'Leader');
+        localStorage.setItem('profileTeamCode', code);
+        localStorage.setItem('profileCompany', code);
+        localStorage.setItem(TEAM_CODE_DRAFT_KEY, code);
+        localStorage.removeItem(LEADER_INTENT_KEY);
+        setMessage('Team code saved.', 'var(--ok)');
+      } catch (err) {
+        console.error('saveTeamCode failed', err);
+        setMessage('Could not save to database. Saved locally only.', '#fbbf24');
+        localStorage.setItem('profileTeamCode', code);
+        localStorage.setItem('profileCompany', code);
+        localStorage.setItem(TEAM_CODE_DRAFT_KEY, code);
+        localStorage.removeItem(LEADER_INTENT_KEY);
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function copyTeamCode() {
+      const code = normalizeTeamCode(document.getElementById('teamCodeInput').value || '');
+      if (!code) {
+        setMessage('No code to copy.', '#fbbf24');
+        return;
+      }
+      try {
+        await navigator.clipboard?.writeText(code);
+        setMessage('Team code copied.', 'var(--ok)');
+      } catch (err) {
+        console.warn('copy failed', err);
+        setMessage('Copy failed. Please copy manually.', '#fbbf24');
+      }
+    }
+
+    function bindEvents() {
+      document.getElementById('generateBtn').addEventListener('click', generateTeamCode);
+      document.getElementById('saveBtn').addEventListener('click', saveTeamCode);
+      document.getElementById('copyBtn').addEventListener('click', copyTeamCode);
+      document.getElementById('backProfileBtn').addEventListener('click', () => { window.location.href = 'profile.html'; });
+      document.getElementById('backDashboardBtn').addEventListener('click', () => { window.location.href = 'dashboard.html'; });
+      document.getElementById('teamCodeInput').addEventListener('blur', (e) => {
+        e.target.value = normalizeTeamCode(e.target.value);
+      });
+    }
+
+    bindEvents();
+    setInputsEnabled(false);
+    enforceLeader();
+  </script>
+</body>
+</html>

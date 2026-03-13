@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Account - Collabrix</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep: #03111b;
+      --bg-1: #0a1724;
+      --card: rgba(9, 20, 34, 0.72);
+      --border: rgba(125, 211, 252, 0.16);
+      --text: #edf5ff;
+      --muted: #97abc8;
+      --accent: #5eead4;
+      --accent2: #7dd3fc;
+      --danger: #f87171;
+      --ok: #4ade80;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      font-family: 'Space Grotesk', sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 20% 20%, rgba(94, 234, 212, 0.14), transparent 30%),
+        radial-gradient(circle at 82% 2%, rgba(125, 211, 252, 0.18), transparent 34%),
+        radial-gradient(circle at 70% 82%, rgba(245, 158, 11, 0.08), transparent 20%),
+        linear-gradient(140deg, var(--bg-1), var(--bg-deep));
+      padding: 22px;
+      position: relative;
+      overflow: hidden;
+    }
+    body::before,
+    body::after {
+      content: '';
+      position: fixed;
+      width: 28rem;
+      height: 28rem;
+      border-radius: 999px;
+      filter: blur(80px);
+      pointer-events: none;
+      opacity: 0.34;
+      animation: drift 18s ease-in-out infinite alternate;
+    }
+    body::before {
+      top: -10rem;
+      right: -10rem;
+      background: rgba(125, 211, 252, 0.16);
+    }
+    body::after {
+      bottom: -12rem;
+      left: -12rem;
+      background: rgba(94, 234, 212, 0.14);
+      animation-duration: 24s;
+    }
+    .card {
+      width: 390px;
+      max-width: 100%;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(10, 24, 39, 0.86), rgba(8, 18, 30, 0.74));
+      border-radius: 26px;
+      padding: 32px;
+      text-align: center;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 26px 80px rgba(0,0,0,0.4);
+      position: relative;
+      overflow: hidden;
+      animation: floatIn 0.65s ease-out both;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 0 0 auto;
+      height: 2px;
+      background: linear-gradient(90deg, rgba(94, 234, 212, 0), rgba(94, 234, 212, 0.9), rgba(125, 211, 252, 0));
+    }
+    h1 { margin: 0 0 8px; font-size: 32px; }
+    p { margin: 0 0 16px; color: var(--muted); font-size: 14px; }
+    .input-group { position: relative; margin-top: 10px; }
+    input {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.03);
+      color: var(--text);
+      font-size: 14px;
+      padding: 13px 42px 13px 12px;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+    }
+    input:hover {
+      border-color: rgba(125, 211, 252, 0.24);
+    }
+    input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(45,212,191,0.18);
+      transform: translateY(-1px);
+    }
+    .toggle-password {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 18px;
+      user-select: none;
+    }
+    .toggle-password:hover { color: var(--accent); }
+    button {
+      width: 100%;
+      border: none;
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 14px;
+      cursor: pointer;
+      color: #031017;
+      font-weight: 600;
+      font-size: 14px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      box-shadow: 0 16px 36px rgba(94,234,212,0.26);
+      transition: 0.15s ease;
+    }
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 18px 46px rgba(94,234,212,0.34);
+    }
+    button:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    .links { margin-top: 14px; font-size: 13px; }
+    .links a { color: var(--accent); text-decoration: none; }
+    .links a:hover { text-decoration: underline; }
+    #message {
+      margin-top: 14px;
+      min-height: 18px;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+    @keyframes drift {
+      from { transform: translate3d(0, 0, 0) scale(1); }
+      to { transform: translate3d(24px, -18px, 0) scale(1.08); }
+    }
+    @keyframes floatIn {
+      from { opacity: 0; transform: translateY(24px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Create Account</h1>
+    <p>New user setup</p>
+
+    <div class="input-group">
+      <input type="email" id="email" placeholder="Enter your email" autocomplete="email">
+    </div>
+    <div class="input-group">
+      <input type="password" id="password" placeholder="Create password (min 6 chars)" autocomplete="new-password">
+      <span class="toggle-password" onclick="togglePassword('password')">&#128065;</span>
+    </div>
+    <div class="input-group">
+      <input type="password" id="confirmPassword" placeholder="Confirm password" autocomplete="new-password">
+      <span class="toggle-password" onclick="togglePassword('confirmPassword')">&#128065;</span>
+    </div>
+
+    <button id="signupBtn">Create Account</button>
+    <div class="links">
+      <a href="index.html">Already have an account? Login</a>
+    </div>
+    <p id="message"></p>
+  </div>
+
+  <script src="./vendor/supabase.umd.js"></script>
+  <script src="./supabase.js"></script>
+  <script>
+    const supabaseClient = window.supabase;
+
+    function setMessage(text, color) {
+      const el = document.getElementById('message');
+      if (!el) return;
+      el.style.color = color || 'var(--muted)';
+      el.textContent = text || '';
+    }
+
+    function setBusy(flag) {
+      const btn = document.getElementById('signupBtn');
+      if (btn) btn.disabled = !!flag;
+    }
+
+    function togglePassword(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.type = el.type === 'password' ? 'text' : 'password';
+    }
+
+    function ensureSupabase() {
+      return !!supabaseClient;
+    }
+
+    async function signup() {
+      if (!ensureSupabase()) {
+        setMessage('Supabase SDK failed to load. Check internet connection.', 'var(--danger)');
+        return;
+      }
+      setBusy(true);
+      try {
+        const email = (document.getElementById('email').value || '').trim();
+        const password = document.getElementById('password').value || '';
+        const confirmPassword = document.getElementById('confirmPassword').value || '';
+        if (!email || !password || !confirmPassword) {
+          setMessage('Enter email, password, and confirm password.', 'var(--danger)');
+          return;
+        }
+        if (password.length < 6) {
+          setMessage('Password must be at least 6 characters.', 'var(--danger)');
+          return;
+        }
+        if (password !== confirmPassword) {
+          setMessage('Passwords do not match.', 'var(--danger)');
+          return;
+        }
+
+        const res = await supabaseClient.auth.signUp({ email, password });
+        if (res.error) {
+          setMessage(res.error.message, 'var(--danger)');
+          return;
+        }
+
+        const user = res.data?.user || null;
+        const session = res.data?.session || null;
+        if (user?.id) localStorage.setItem('profileUserId', user.id);
+        localStorage.setItem('profileEmail', email);
+        localStorage.setItem('profileCompleted', 'false');
+        localStorage.removeItem('profileRole');
+        localStorage.removeItem('profileJobRole');
+        localStorage.removeItem('profileCompany');
+        localStorage.removeItem('profileTeamCode');
+
+        if (!session) {
+          setMessage('Account created. Check your email, then login.', 'var(--ok)');
+          setTimeout(() => { window.location.href = 'index.html'; }, 1200);
+          return;
+        }
+
+        setMessage('Account created. Redirecting to profile setup...', 'var(--ok)');
+        setTimeout(() => { window.location.href = 'profile.html?new=1'; }, 600);
+      } catch (err) {
+        console.error('signup failed', err);
+        setMessage('Could not create account right now.', 'var(--danger)');
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    function bindEvents() {
+      const email = document.getElementById('email');
+      const password = document.getElementById('password');
+      const confirm = document.getElementById('confirmPassword');
+      const button = document.getElementById('signupBtn');
+      const onEnter = (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          signup();
+        }
+      };
+      email?.addEventListener('keydown', onEnter);
+      password?.addEventListener('keydown', onEnter);
+      confirm?.addEventListener('keydown', onEnter);
+      button?.addEventListener('click', (e) => {
+        e.preventDefault();
+        signup();
+      });
+    }
+
+    bindEvents();
+    window.togglePassword = togglePassword;
+  </script>
+</body>
+</html>

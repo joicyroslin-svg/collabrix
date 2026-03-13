@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Collabrix Analytics</title>
+  <link rel="icon" href="data:," />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet">
+  <script src="./vendor/supabase.umd.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg: #07111a;
+      --panel: rgba(11, 22, 35, 0.88);
+      --card: rgba(19, 34, 50, 0.86);
+      --border: rgba(125, 211, 252, 0.14);
+      --text: #eef4ff;
+      --muted: #8ea4c3;
+      --accent: #5eead4;
+      --accent2: #7dd3fc;
+      --warm: #f59e0b;
+      --danger: #f87171;
+      --success: #4ade80;
+      --radius: 18px;
+      --shadow-xl: 0 28px 80px rgba(2, 8, 18, 0.42);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scrollbar-color: rgba(125, 211, 252, 0.4) transparent; }
+    body {
+      font-family: 'Inter', 'Space Grotesk', sans-serif;
+      background: 
+        radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.12) 0%, transparent 35%),
+        radial-gradient(circle at 85% 10%, rgba(6, 182, 212, 0.1) 0%, transparent 30%),
+        radial-gradient(circle at 50% 90%, rgba(16, 185, 129, 0.08) 0%, transparent 25%),
+        linear-gradient(160deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+    body::before,
+    body::after {
+      content: '';
+      position: fixed;
+      inset: auto;
+      width: 40rem;
+      height: 40rem;
+      border-radius: 999px;
+      filter: blur(100px);
+      pointer-events: none;
+      opacity: 0.25;
+      z-index: 0;
+      animation: ambientFloat 20s ease-in-out infinite alternate;
+    }
+    body::before {
+      top: -12rem;
+      right: -12rem;
+      background: rgba(99, 102, 241, 0.15);
+    }
+    body::after {
+      bottom: -14rem;
+      left: -14rem;
+      background: rgba(6, 182, 212, 0.12);
+      animation-duration: 25s;
+    }
+    @keyframes ambientFloat {
+      from { transform: translate3d(0, 0, 0) scale(1); }
+      to { transform: translate3d(24px, -18px, 0) scale(1.08); }
+    }
+    a { color: inherit; }
+    .app {
+      display: flex;
+      min-height: calc(100vh - 32px);
+      width: min(1480px, calc(100% - 32px));
+      margin: 16px auto;
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      border-radius: 28px;
+      background: rgba(15, 23, 42, 0.75);
+      box-shadow: var(--shadow-xl);
+      backdrop-filter: blur(20px);
+      overflow: hidden;
+      position: relative;
+      z-index: 1;
+    }
+    .app::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(115deg, rgba(99, 102, 241, 0.06), transparent 24%),
+        radial-gradient(circle at 75% 18%, rgba(6, 182, 212, 0.1), transparent 28%);
+      pointer-events: none;
+    }
+    .sidebar {
+      width: 260px;
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.95), rgba(8, 15, 28, 0.95));
+      border-right: 1px solid rgba(99, 102, 241, 0.15);
+      padding: 22px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      position: relative;
+      z-index: 1;
+    }
+    .sidebar::before {
+      content: '';
+      position: absolute;
+      inset: 0 0 auto;
+      height: 180px;
+      background: radial-gradient(circle at top, rgba(99, 102, 241, 0.2), transparent 68%);
+      pointer-events: none;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      padding: 14px 16px;
+      border-radius: 18px;
+      border: 1px solid rgba(125, 211, 252, 0.14);
+      background: rgba(10, 24, 37, 0.75);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+    .brand-dot {
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: grid;
+      place-items: center;
+      color: #031018;
+      font-weight: 800;
+      box-shadow: 0 12px 26px rgba(94, 234, 212, 0.28);
+    }
+    .nav { display: flex; flex-direction: column; gap: 8px; }
+    .nav button {
+      border: 1px solid transparent;
+      background: rgba(9, 20, 31, 0.5);
+      color: var(--text);
+      padding: 12px 14px;
+      border-radius: 14px;
+      text-align: left;
+      cursor: pointer;
+      transition: 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .nav button::before {
+      content: '';
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 3px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, var(--accent), var(--accent2));
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    .nav button.active,
+    .nav button:hover {
+      background: rgba(125, 211, 252, 0.1);
+      border-color: rgba(125, 211, 252, 0.22);
+      transform: translateX(2px);
+    }
+    .nav button.active::before,
+    .nav button:hover::before { opacity: 1; }
+    .profile-mini {
+      margin-top: auto;
+      border: 1px solid rgba(125, 211, 252, 0.14);
+      border-radius: 18px;
+      padding: 14px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      cursor: pointer;
+      background: linear-gradient(180deg, rgba(10, 24, 37, 0.84), rgba(9, 18, 29, 0.7));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .profile-mini:hover { transform: translateY(-1px); border-color: rgba(94, 234, 212, 0.28); }
+    .logout-btn { margin-top: 10px; border: 1px solid rgba(248,113,113,0.4); background: rgba(248,113,113,0.1); color: #fecaca; padding: 10px 12px; border-radius: 10px; cursor: pointer; font-weight: 600; }
+    .logout-btn:hover { background: rgba(248,113,113,0.18); }
+    .avatar { width: 46px; height: 46px; border-radius: 16px; background: linear-gradient(135deg, #f59e0b, #fb7185); display: grid; place-items: center; font-weight: 700; color: #0c1118; box-shadow: 0 12px 20px rgba(245, 158, 11, 0.25); }
+    .main {
+      flex: 1;
+      padding: 26px 30px 30px;
+      position: relative;
+      z-index: 1;
+      overflow: auto;
+    }
+    .main::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 12% 16%, rgba(94, 234, 212, 0.07), transparent 24%),
+        radial-gradient(circle at 84% 10%, rgba(125, 211, 252, 0.07), transparent 26%);
+      pointer-events: none;
+    }
+    .main > * { position: relative; z-index: 1; }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      padding: 20px 22px;
+      border-radius: 24px;
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(30, 41, 59, 0.72));
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+    }
+    .badge {
+      padding: 9px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      background: rgba(99, 102, 241, 0.15);
+      color: #a5b4fc;
+      font-weight: 600;
+      font-size: 13px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+    .muted { color: var(--muted); font-size: 13px; }
+    
+    /* Analytics Page Specific Styles */
+    .analytics-page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+    }
+    .analytics-page-title {
+      font-size: 28px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .analytics-page-subtitle {
+      font-size: 14px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    .back-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(9, 20, 31, 0.5);
+      color: var(--text);
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+    .back-btn:hover {
+      border-color: var(--accent);
+      transform: translateX(-2px);
+    }
+    
+    /* Analytics Section */
+    .analytics-section {
+      background: linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(8, 15, 28, 0.92));
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      border-radius: 20px;
+      padding: 28px;
+      margin-bottom: 24px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 40px rgba(99, 102, 241, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+    .analytics-section::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: 
+        radial-gradient(ellipse at 10% 10%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 90% 90%, rgba(6, 182, 212, 0.1) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    .analytics-section::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.5), rgba(6, 182, 212, 0.5), transparent);
+    }
+    .analytics-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      position: relative;
+      z-index: 1;
+    }
+    .analytics-title {
+      font-size: 20px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #f1f5f9;
+    }
+    .analytics-title span:first-child {
+      font-size: 24px;
+    }
+    .analytics-badge {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(6, 182, 212, 0.25));
+      color: #a5b4fc;
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      animation: badgePulse 2s ease-in-out infinite;
+    }
+    @keyframes badgePulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
+      50% { box-shadow: 0 0 0 8px rgba(99, 102, 241, 0); }
+    }
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      gap: 32px;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+    }
+    @media(max-width: 768px) {
+      .analytics-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .analytics-stats {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .analytics-stat {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 18px 22px;
+      border-radius: 16px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      min-width: 160px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    }
+    .analytics-stat:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+    }
+    .analytics-stat.completed-stat {
+      border-color: rgba(16, 185, 129, 0.4);
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(15, 23, 42, 0.8));
+    }
+    .analytics-stat.pending-stat {
+      border-color: rgba(251, 191, 36, 0.4);
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(15, 23, 42, 0.8));
+    }
+    .analytics-stat.overdue-stat {
+      border-color: rgba(244, 63, 94, 0.4);
+      background: linear-gradient(135deg, rgba(244, 63, 94, 0.15), rgba(15, 23, 42, 0.8));
+    }
+    .analytics-stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+    .analytics-stat-icon.completed {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.4), rgba(16, 185, 129, 0.15));
+      color: #34d399;
+      box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+    }
+    .analytics-stat-icon.pending {
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.4), rgba(251, 191, 36, 0.15));
+      color: #fbbf24;
+      box-shadow: 0 4px 16px rgba(251, 191, 36, 0.3);
+    }
+    .analytics-stat-icon.overdue {
+      background: linear-gradient(135deg, rgba(244, 63, 94, 0.4), rgba(244, 63, 94, 0.15));
+      color: #fb7185;
+      box-shadow: 0 4px 16px rgba(244, 63, 94, 0.3);
+      animation: overduePulse 1.5s ease-in-out infinite;
+    }
+    @keyframes overduePulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    .analytics-stat-value {
+      font-size: 28px;
+      font-weight: 800;
+      color: #f1f5f9;
+      line-height: 1;
+    }
+    .analytics-stat-label {
+      font-size: 12px;
+      color: #94a3b8;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 4px;
+    }
+    .analytics-chart-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+    .analytics-chart {
+      max-width: 220px;
+      max-height: 220px;
+    }
+    
+    /* Progress Section */
+    .project-progress-section {
+      background: linear-gradient(135deg, rgba(17, 31, 46, 0.96), rgba(13, 24, 37, 0.82));
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 22px;
+      margin-bottom: 22px;
+      box-shadow: 0 18px 56px rgba(2, 8, 18, 0.28);
+      position: relative;
+      overflow: hidden;
+    }
+    .project-progress-section::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top right, rgba(125, 211, 252, 0.16), transparent 36%);
+      pointer-events: none;
+    }
+    .progress-header { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      margin-bottom: 12px; 
+    }
+    .progress-title { 
+      font-size: 16px; 
+      font-weight: 600; 
+      display: flex; 
+      align-items: center; 
+      gap: 8px; 
+    }
+    .progress-percentage { 
+      font-size: 24px; 
+      font-weight: 700; 
+      color: var(--accent); 
+    }
+    .progress-stats { 
+      font-size: 13px; 
+      color: var(--muted); 
+      margin-top: 8px; 
+    }
+    .progress-bar-container {
+      height: 12px;
+      background: rgba(5, 12, 20, 0.9);
+      border-radius: 999px; 
+      overflow: hidden; 
+      border: 1px solid rgba(125, 211, 252, 0.1); 
+    }
+    .progress-bar-fill { 
+      height: 100%; 
+      background: linear-gradient(90deg, var(--accent), var(--accent2)); 
+      border-radius: 999px; 
+      transition: width 0.5s ease-in-out; 
+    }
+    .progress-bar-fill.low { background: linear-gradient(90deg, #f87171, #ef4444); }
+    .progress-bar-fill.medium { background: linear-gradient(90deg, #fbbf24, #f59e0b); }
+    .progress-bar-fill.high { background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+    .progress-bar-fill.complete { background: linear-gradient(90deg, var(--success), #22c55e); }
+    
+    /* Task Details Grid */
+    .task-details-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+      margin-top: 24px;
+    }
+    .task-detail-card {
+      background: linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(8, 15, 28, 0.9));
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      border-radius: 16px;
+      padding: 18px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .task-detail-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+    }
+    .task-detail-card.completed {
+      opacity: 0.7;
+    }
+    .task-detail-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #f1f5f9;
+      margin-bottom: 8px;
+    }
+    .task-detail-status {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .task-detail-status.completed {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.35);
+    }
+    .task-detail-status.pending {
+      background: rgba(148, 163, 184, 0.2);
+      color: #94a3b8;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+    }
+    .task-detail-status.in-progress {
+      background: rgba(251, 191, 36, 0.2);
+      color: #fbbf24;
+      border: 1px solid rgba(251, 191, 36, 0.35);
+    }
+    .task-detail-status.overdue {
+      background: rgba(244, 63, 94, 0.2);
+      color: #fb7185;
+      border: 1px solid rgba(244, 63, 94, 0.35);
+    }
+    .task-detail-meta {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+    .task-detail-deadline {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      margin-top: 6px;
+    }
+    .task-detail-deadline.overdue {
+      color: #ef4444;
+    }
+    .task-detail-deadline.soon {
+      color: #fbbf24;
+    }
+    .task-detail-deadline.safe {
+      color: #60a5fa;
+    }
+    
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+    .empty-state-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    
+    /* Loading */
+    .loading-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-weight: 600;
+      font-size: 18px;
+    }
+    
+    /* Notification */
+    .app-notice {
+      display: none;
+      margin-bottom: 14px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      font-size: 13px;
+      backdrop-filter: blur(14px);
+    }
+    .app-notice.show {
+      display: block;
+    }
+    .app-notice.info { background: rgba(96,165,250,0.08); color: #bfdbfe; border-color: rgba(96,165,250,0.35); }
+    .app-notice.success { background: rgba(74,222,128,0.1); color: #bbf7d0; border-color: rgba(74,222,128,0.35); }
+    .app-notice.warn { background: rgba(251,191,36,0.1); color: #fde68a; border-color: rgba(251,191,36,0.35); }
+    .app-notice.error { background: rgba(248,113,113,0.1); color: #fecaca; border-color: rgba(248,113,113,0.35); }
+    
+    @media(max-width: 900px) {
+      .app { flex-direction: column; }
+      .sidebar { width: 100%; flex-direction: row; align-items: center; gap: 12px; }
+      .nav { flex-direction: row; flex-wrap: wrap; }
+      .nav button { flex: 1; }
+      .main { padding: 18px; }
+    }
+  </style>
+</head>
+<body>
+<div id="loading" class="loading-container">Loading Analytics...</div>
+
+<div class="app" id="app" style="display:none;">
+  <aside class="sidebar">
+    <div class="brand"><div class="brand-dot">CX</div><div>Collabrix</div></div>
+    <div class="nav">
+      <button id="navDashboard" onclick="goToDashboard()">Dashboard</button>
+      <button id="navAnalytics" class="active">Analytics</button>
+      <button id="navKanban" onclick="goToKanban()">Kanban</button>
+      <button id="navAI" onclick="goToAI()">AI Assistant</button>
+    </div>
+    <div class="profile-mini" onclick="openProfile()">
+      <div class="avatar" id="avatar">U</div>
+      <div>
+        <div id="miniName">User</div>
+        <div class="muted" id="miniRole">Role</div>
+      </div>
+    </div>
+    <button id="logoutBtn" class="logout-btn" type="button">Logout</button>
+  </aside>
+
+  <main class="main">
+    <div class="app-notice" id="appNotice"></div>
+
+    <!-- Analytics Header -->
+    <div class="analytics-page-header">
+      <div>
+        <h1 class="analytics-page-title">📊 Progress Analytics</h1>
+        <p class="analytics-page-subtitle">Track your task completion and team performance</p>
+      </div>
+      <button class="back-btn" onclick="goToDashboard()">
+        <span>←</span> Back to Dashboard
+      </button>
+    </div>
+
+    <!-- Role Badge -->
+    <div class="header" style="margin-bottom: 24px;">
+      <div>
+        <div class="muted" style="font-size:12px;">Analytics Overview</div>
+        <h2 id="pageTitle">Your Progress</h2>
+      </div>
+      <div class="badge" id="roleBadge">Role</div>
+    </div>
+
+    <!-- Main Analytics Section -->
+    <div class="analytics-section" id="mainAnalyticsSection">
+      <div class="analytics-header">
+        <div class="analytics-title">
+          <span>📈</span>
+          <span id="analyticsTitle">My Progress Analytics</span>
+        </div>
+        <div class="analytics-badge">Real-time</div>
+      </div>
+      <div class="analytics-grid">
+        <div class="analytics-stats">
+          <div class="analytics-stat completed-stat">
+            <div class="analytics-stat-icon completed">✓</div>
+            <div>
+              <div class="analytics-stat-value" id="completedCount">0</div>
+              <div class="analytics-stat-label">Completed</div>
+            </div>
+          </div>
+          <div class="analytics-stat pending-stat">
+            <div class="analytics-stat-icon pending">⏳</div>
+            <div>
+              <div class="analytics-stat-value" id="pendingCount">0</div>
+              <div class="analytics-stat-label">Pending</div>
+            </div>
+          </div>
+          <div class="analytics-stat overdue-stat">
+            <div class="analytics-stat-icon overdue">⚠</div>
+            <div>
+              <div class="analytics-stat-value" id="overdueCount">0</div>
+              <div class="analytics-stat-label">Overdue</div>
+            </div>
+          </div>
+        </div>
+        <div class="analytics-chart-container">
+          <canvas id="analyticsChart" class="analytics-chart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress Bar Section -->
+    <div class="project-progress-section" id="progressSection">
+      <div class="progress-header">
+        <div class="progress-title">
+          <span>🎯</span>
+          <span id="progressTitle">My Progress</span>
+        </div>
+        <div class="progress-percentage" id="progressPercent">0%</div>
+      </div>
+      <div class="progress-bar-container">
+        <div class="progress-bar-fill" id="progressBar" style="width: 0%;"></div>
+      </div>
+      <div class="progress-stats" id="progressStats">Loading task progress...</div>
+    </div>
+
+    <!-- Task Details Grid -->
+    <div class="task-details-section">
+      <h3 style="margin-bottom: 16px; font-size: 18px;">📋 Task Details</h3>
+      <div class="task-details-grid" id="taskDetailsGrid">
+        <!-- Tasks will be rendered here -->
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  let supabaseClient = null;
+  let currentUser = null;
+  let role = 'Member';
+  let teamCode = '';
+  let allTasks = [];
+  let analyticsChart = null;
+
+  const IST_TIME_ZONE = 'Asia/Kolkata';
+
+  function qs(id) { return document.getElementById(id); }
+
+  function normalizeProfileRow(raw) {
+    if (!raw) return null;
+    return {
+      id: raw.id,
+      full_name: raw.full_name || raw.name || raw.display_name || raw.username || raw.email || 'User',
+      role: raw.role || raw.job_role || raw.user_role || '',
+      job_role: raw.job_role || raw.role || raw.user_role || '',
+      company: raw.company || raw.team_code || raw.organization || raw.org || ''
+    };
+  }
+
+  function normalizeTaskRow(raw) {
+    if (!raw) return null;
+    const explicitStatus = raw.status || raw.task_status || raw.state || null;
+    const completedFlag = raw.is_completed || raw.completed || raw.done || null;
+    const normalizedStatus = explicitStatus || (completedFlag === true ? 'Completed' : 'Pending');
+    return {
+      id: raw.id || '',
+      title: raw.title || raw.task_title || raw.name || 'Untitled',
+      description: raw.description || raw.task_description || raw.details || raw.notes || '',
+      status: normalizedStatus,
+      deadline: raw.deadline || raw.due_date || raw.target_date || null,
+      assigned_to: raw.assigned_to || raw.user_id || raw.assignee_id || null,
+      user_id: raw.user_id || raw.assigned_to || raw.assignee_id || null,
+      created_by: raw.created_by || raw.creator_id || raw.owner_id || null,
+      created_at: raw.created_at || raw.inserted_at || null,
+      profiles: raw.profiles || null
+    };
+  }
+
+  function notify(message, type = 'info', timeout = 3500) {
+    const el = qs('appNotice');
+    if (!el) return;
+    if (noticeTimer) {
+      clearTimeout(noticeTimer);
+      noticeTimer = null;
+    }
+    if (!message) {
+      el.textContent = '';
+      el.className = 'app-notice hidden';
+      return;
+    }
+    const safeType = ['info', 'success', 'warn', 'error'].includes(type) ? type : 'info';
+    el.textContent = message;
+    el.className = `app-notice show ${safeType}`;
+    if (timeout > 0) {
+      noticeTimer = setTimeout(() => {
+        el.textContent = '';
+        el.className = 'app-notice hidden';
+      }, timeout);
+    }
+  }
+
+  let noticeTimer = null;
+
+  function setLoading(state) {
+    qs('loading').style.display = state ? 'flex' : 'none';
+    qs('app').style.display = state ? 'none' : 'flex';
+  }
+
+  function goToDashboard() {
+    window.location.href = 'dashboard.html';
+  }
+
+  function goToAI() {
+    window.location.href = 'dashboard.html#ai';
+  }
+
+  function goToKanban() {
+    window.location.href = 'kanban.html';
+  }
+
+  function openProfile() {
+    window.location.href = 'profile.html';
+  }
+
+  async function logout() {
+    try {
+      if (supabaseClient && supabaseClient.auth) {
+        await supabaseClient.auth.signOut();
+      }
+    } catch (err) {
+      console.warn('logout failed', err);
+    }
+    window.location.href = 'index.html';
+  }
+
+  function getDisplayName() {
+    return localStorage.getItem('profileName') || 'User';
+  }
+
+  function normalizeTeamCode(value) {
+    return (value || '').trim().toLowerCase();
+  }
+
+  function parseDeadlineValue(deadline) {
+    if (!deadline) return null;
+    if (deadline instanceof Date) {
+      return Number.isNaN(deadline.getTime()) ? null : deadline;
+    }
+    const raw = String(deadline).trim();
+    if (!raw) return null;
+
+    let normalized = raw.replace(' ', 'T');
+    if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+      normalized = `${normalized}T00:00:00+05:30`;
+    }
+
+    let parsed = new Date(normalized);
+    if (!Number.isNaN(parsed.getTime())) return parsed;
+
+    parsed = new Date(raw);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  function isDeadlinePassed(deadline) {
+    const deadlineDate = parseDeadlineValue(deadline);
+    return !!deadlineDate && deadlineDate.getTime() <= Date.now();
+  }
+
+  function isDeadlineSoon(deadline) {
+    const deadlineDate = parseDeadlineValue(deadline);
+    if (!deadlineDate) return false;
+    const diffMs = deadlineDate.getTime() - Date.now();
+    return diffMs > 0 && diffMs <= (1000 * 60 * 60);
+  }
+
+  function getDeadlineClass(deadline) {
+    if (!deadline) return '';
+    if (isDeadlinePassed(deadline)) return 'overdue';
+    if (isDeadlineSoon(deadline)) return 'soon';
+    return 'safe';
+  }
+
+  function formatDeadline(deadline) {
+    const deadlineDate = parseDeadlineValue(deadline);
+    if (!deadlineDate) return 'No deadline';
+
+    try {
+      const parts = new Intl.DateTimeFormat('en-IN', {
+        timeZone: IST_TIME_ZONE,
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      }).formatToParts(deadlineDate);
+
+      const getPart = (type) => {
+        const match = parts.find(p => p.type === type);
+        return match ? match.value : '';
+      };
+
+      return `${getPart('day')} ${getPart('month')} ${getPart('year')}, ${getPart('hour')}:${getPart('minute')} ${getPart('dayPeriod').toUpperCase()}`;
+    } catch (e) {
+      return String(deadline);
+    }
+  }
+
+  function calculateProgress(tasks) {
+    if (!tasks || tasks.length === 0) {
+      return { total: 0, completed: 0, inProgress: 0, pending: 0, percentage: 0 };
+    }
+
+    const total = tasks.length;
+    const completed = tasks.filter(t => t.status === 'Completed').length;
+    const inProgress = tasks.filter(t => t.status === 'In Progress').length;
+    const pending = tasks.filter(t => !t.status || t.status === 'Pending').length;
+
+    let percentage = 0;
+    if (completed < total) {
+      percentage = Math.round((completed / total) * 100);
+    }
+
+    return { total, completed, inProgress, pending, percentage };
+  }
+
+  function renderProgress() {
+    const tasks = allTasks || [];
+    const stats = calculateProgress(tasks);
+
+    const percentEl = qs('progressPercent');
+    const barEl = qs('progressBar');
+    const statsEl = qs('progressStats');
+
+    if (!percentEl || !barEl || !statsEl) return;
+
+    if (stats.total === 0) {
+      percentEl.textContent = '0%';
+      barEl.style.width = '0%';
+      barEl.className = 'progress-bar-fill';
+      statsEl.textContent = 'No tasks yet';
+      return;
+    }
+
+    if (stats.completed === stats.total && stats.total > 0) {
+      percentEl.textContent = '0%';
+      barEl.style.width = '0%';
+      barEl.className = 'progress-bar-fill';
+      statsEl.textContent = '🎉 All tasks completed! Start fresh - add new tasks';
+      return;
+    }
+
+    percentEl.textContent = stats.percentage + '%';
+    barEl.style.width = stats.percentage + '%';
+
+    barEl.className = 'progress-bar-fill';
+    if (stats.percentage >= 60) {
+      barEl.classList.add('high');
+    } else if (stats.percentage >= 30) {
+      barEl.classList.add('medium');
+    } else {
+      barEl.classList.add('low');
+    }
+
+    statsEl.textContent = `${stats.completed} of ${stats.total} tasks completed${stats.inProgress > 0 ? ' • ' + stats.inProgress + ' in progress' : ''}`;
+  }
+
+  function renderAnalytics() {
+    const tasks = allTasks || [];
+    const completed = tasks.filter(t => t.status === 'Completed').length;
+    const pending = tasks.filter(t => !t.status || t.status === 'Pending' || t.status === 'In Progress').length;
+    const overdue = tasks.filter(t => isDeadlinePassed(t.deadline) && t.status !== 'Completed').length;
+
+    // Update count displays
+    qs('completedCount').textContent = completed;
+    qs('pendingCount').textContent = pending;
+    qs('overdueCount').textContent = overdue;
+
+    // Create pie chart
+    createPieChart(completed, pending, overdue);
+  }
+
+  function createPieChart(completed, pending, overdue) {
+    const ctx = qs('analyticsChart');
+    if (!ctx) return;
+
+    if (analyticsChart) {
+      analyticsChart.destroy();
+    }
+
+    const data = {
+      labels: ['Completed', 'Pending', 'Overdue'],
+      datasets: [{
+        data: [completed, pending, overdue],
+        backgroundColor: [
+          '#22C55E',  // Completed - Green
+          '#F59E0B',  // Pending - Amber
+          '#EF4444'   // Overdue - Red
+        ],
+        borderColor: [
+          '#22C55E',
+          '#F59E0B',
+          '#EF4444'
+        ],
+        borderWidth: 3,
+        hoverOffset: 10,
+        hoverBorderWidth: 4
+      }]
+    };
+
+    analyticsChart = new Chart(ctx, {
+      type: 'pie',
+      data: data,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+            titleColor: '#f1f5f9',
+            bodyColor: '#94a3b8',
+            borderColor: 'rgba(99, 102, 241, 0.4)',
+            borderWidth: 1,
+            cornerRadius: 12,
+            padding: 14
+          }
+        },
+        animation: {
+          animateRotate: true,
+          animateScale: true,
+          duration: 1000,
+          easing: 'easeOutQuart'
+        }
+      }
+    });
+  }
+
+  function renderTaskDetails() {
+    const grid = qs('taskDetailsGrid');
+    if (!grid) return;
+
+    grid.innerHTML = '';
+
+    const tasks = allTasks || [];
+    if (tasks.length === 0) {
+      grid.innerHTML = `
+        <div class="empty-state" style="grid-column: 1/-1;">
+          <div class="empty-state-icon">📋</div>
+          <div class="empty-state-title">No Tasks Found</div>
+          <p>No tasks available for analytics.</p>
+        </div>
+      `;
+      return;
+    }
+
+    tasks.forEach(task => {
+      const currentStatus = task.status || 'Pending';
+      const isCompleted = currentStatus === 'Completed';
+      const isOverdue = isDeadlinePassed(task.deadline) && !isCompleted;
+      const deadlineClass = getDeadlineClass(task.deadline);
+
+      const card = document.createElement('div');
+      card.className = `task-detail-card${isCompleted ? ' completed' : ''}`;
+      card.innerHTML = `
+        <div class="task-detail-status ${isCompleted ? 'completed' : isOverdue ? 'overdue' : currentStatus === 'In Progress' ? 'in-progress' : 'pending'}">
+          ${isCompleted ? 'Completed' : isOverdue ? 'Overdue' : currentStatus === 'In Progress' ? 'In Progress' : 'Pending'}
+        </div>
+        <div class="task-detail-title">${task.title || 'Untitled'}</div>
+        <div class="task-detail-meta">
+          ${task.description ? task.description.substring(0, 80) + (task.description.length > 80 ? '...' : '') : 'No description'}
+        </div>
+        <div class="task-detail-deadline ${deadlineClass}">
+          <span>📅</span>
+          <span>${formatDeadline(task.deadline)}</span>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  function updateUI() {
+    // Update role-based UI
+    const isLeader = role === 'Leader';
+    
+    qs('analyticsTitle').textContent = isLeader ? 'Team Progress Analytics' : 'My Progress Analytics';
+    qs('progressTitle').textContent = isLeader ? 'Team Progress' : 'My Progress';
+    qs('pageTitle').textContent = isLeader ? 'Team Analytics' : 'My Analytics';
+    qs('roleBadge').textContent = teamCode ? `${role} • ${teamCode}` : role;
+
+    renderAnalytics();
+    renderProgress();
+    renderTaskDetails();
+  }
+
+  async function fetchTasks() {
+    if (!supabaseClient || !currentUser) return;
+
+    let rows = [];
+
+    if (role === 'Member') {
+      // Members fetch only their assigned tasks
+      const { data: assignedData } = await supabaseClient
+        .from('tasks')
+        .select('*')
+        .eq('assigned_to', currentUser.id);
+
+      const { data: userIdData } = await supabaseClient
+        .from('tasks')
+        .select('*')
+        .eq('user_id', currentUser.id);
+
+      if (assignedData) rows = assignedData;
+      if (userIdData) {
+        const existingIds = new Set(rows.map(t => t.id));
+        userIdData.forEach(t => {
+          if (!existingIds.has(t.id)) rows.push(t);
+        });
+      }
+    } else {
+      // Leaders fetch all tasks
+      const { data } = await supabaseClient
+        .from('tasks')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (data) rows = data;
+    }
+
+    allTasks = rows.map(normalizeTaskRow).filter(Boolean);
+
+    // Deduplicate by ID
+    const seenIds = new Set();
+    allTasks = allTasks.filter(t => {
+      const id = String(t.id);
+      if (seenIds.has(id)) return false;
+      seenIds.add(id);
+      return true;
+    });
+
+    updateUI();
+  }
+
+  async function init() {
+    try {
+      // Initialize Supabase
+      if (!window.supabase || !window.supabase.createClient) {
+        qs('loading').textContent = 'Supabase SDK failed to load. Check your internet connection.';
+        return;
+      }
+
+      supabaseClient = window.supabase.createClient(
+        "https://xvjxbmdkczopeflajvjl.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2anhibWRrY3pvcGVmbGFqdmpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxOTI4OTEsImV4cCI6MjA4Nzc2ODg5MX0.JY5eYIpOjoqU01n1o4YylZo5A8TXmyqE0BMcquElnzY"
+      );
+
+      // Get current user
+      const { data: { user }, error } = await supabaseClient.auth.getUser();
+      if (error || !user) {
+        window.location.href = 'index.html';
+        return;
+      }
+
+      currentUser = user;
+
+      // Get profile
+      const { data: profile } = await supabaseClient
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      // Get role from localStorage first (set during signup/team-access)
+      let roleFromStorage = localStorage.getItem('profileRole') || localStorage.getItem('profileJobRole') || '';
+      
+      // Fallback to profile data
+      if (!roleFromStorage && profile) {
+        roleFromStorage = profile.job_role || profile.role || '';
+      }
+
+      role = roleFromStorage.toLowerCase() === 'leader' ? 'Leader' : 'Member';
+
+      // Get team code
+      const storedTeamCode = localStorage.getItem('profileTeamCode') || localStorage.getItem('profileCompany') || '';
+      const profileCompany = profile?.company || profile?.team_code || '';
+      teamCode = storedTeamCode || profileCompany;
+
+      // Update UI
+      const name = localStorage.getItem('profileName') || profile?.full_name || user.email?.split('@')[0] || 'User';
+      qs('avatar').textContent = name.charAt(0).toUpperCase();
+      qs('miniName').textContent = name;
+      qs('miniRole').textContent = role;
+
+      // Fetch tasks and show analytics
+      await fetchTasks();
+
+      setLoading(false);
+    } catch (err) {
+      console.error('Analytics init failed', err);
+      qs('loading').textContent = 'Error loading analytics. Check console/network.';
+    }
+  }
+
+  // Event listeners
+qs('logoutBtn').addEventListener('click', logout);
+
+window.goToDashboard = () => window.location.href = 'dashboard.html';
+window.goToKanban = () => window.location.href = 'kanban.html';
+window.goToAI = () => window.location.href = 'dashboard.html#ai';
+
+  // Initialize on load
+  init();
+</script>
+
+</body>
+</html>
+
+

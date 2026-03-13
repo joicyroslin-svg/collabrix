@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile - Collabrix</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="./vendor/supabase.umd.js"></script>
+  <script src="./supabase.js"></script>
+  <style>
+    :root {
+      --bg-primary: #0f172a;
+      --bg-secondary: rgba(15, 23, 42, 0.9);
+      --bg-tertiary: rgba(30, 41, 59, 0.85);
+      --border-color: rgba(99, 102, 241, 0.2);
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent: #6366f1;
+      --accent2: #06b6d4;
+      --danger: #f43f5e;
+      --ok: #10b981;
+      --warn: #fbbf24;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Space Grotesk', 'Inter', sans-serif;
+      background: 
+        radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.12) 0%, transparent 35%),
+        radial-gradient(circle at 85% 10%, rgba(6, 182, 212, 0.1) 0%, transparent 30%),
+        radial-gradient(circle at 50% 90%, rgba(16, 185, 129, 0.08) 0%, transparent 25%),
+        linear-gradient(160deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    body::before,
+    body::after {
+      content: '';
+      position: fixed;
+      width: 40rem;
+      height: 40rem;
+      border-radius: 999px;
+      filter: blur(100px);
+      pointer-events: none;
+      opacity: 0.25;
+      animation: drift 20s ease-in-out infinite alternate;
+    }
+    body::before {
+      top: -12rem;
+      right: -12rem;
+      background: rgba(99, 102, 241, 0.15);
+    }
+    body::after {
+      bottom: -14rem;
+      left: -14rem;
+      background: rgba(6, 182, 212, 0.12);
+      animation-duration: 25s;
+    }
+
+    .profile-card {
+      background: linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.85));
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      border-radius: 24px;
+      padding: 34px;
+      width: 100%;
+      max-width: 560px;
+      box-shadow: 0 26px 80px rgba(0, 0, 0, 0.4), 0 0 40px rgba(99, 102, 241, 0.1);
+      backdrop-filter: blur(18px);
+      position: relative;
+      overflow: hidden;
+      animation: floatIn 0.65s ease-out both;
+    }
+    .profile-card::before {
+      content: '';
+      position: absolute;
+      inset: 0 0 auto;
+      height: 2px;
+      background: linear-gradient(90deg, rgba(99, 102, 241, 0), rgba(99, 102, 241, 0.9), rgba(6, 182, 212, 0));
+    }
+
+    .profile-header { text-align: center; margin-bottom: 26px; }
+    .profile-avatar {
+      width: 82px;
+      height: 82px;
+      margin: 0 auto 12px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #ffffff;
+      display: grid;
+      place-items: center;
+      font-size: 34px;
+      font-weight: 700;
+      box-shadow: 0 18px 36px rgba(99, 102, 241, 0.3);
+    }
+    .profile-title { font-size: 28px; font-weight: 600; margin-bottom: 6px; }
+    .profile-subtitle { color: var(--text-secondary); font-size: 14px; }
+
+    .completion-bar { margin-top: 12px; }
+    .completion-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+    .completion-track { height: 8px; background: var(--bg-tertiary); border-radius: 4px; overflow: hidden; }
+    .completion-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 4px; transition: width 0.2s; }
+    .completion-percent { font-size: 13px; font-weight: 600; color: var(--accent); margin-top: 4px; text-align: right; }
+
+    .form-group { margin-bottom: 18px; }
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px 14px;
+      background: var(--bg-tertiary);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 14px;
+      font-family: inherit;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+    }
+
+    .form-group input:hover,
+    .form-group select:hover,
+    .form-group textarea:hover { border-color: rgba(99, 102, 241, 0.35); }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+      transform: translateY(-1px);
+    }
+
+    .form-group input::placeholder,
+    .form-group textarea::placeholder { color: var(--text-muted); }
+
+    .form-group select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+    }
+
+    .form-group textarea { resize: vertical; min-height: 78px; }
+
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .team-code-row { display: flex; gap: 8px; align-items: center; }
+    .team-code-row input { flex: 1; }
+
+    .btn-mini {
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 12px;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-mini:hover { border-color: var(--accent); color: var(--accent); background: rgba(99, 102, 241, 0.1); }
+
+    .field-help { margin-top: 6px; font-size: 12px; color: var(--text-muted); line-height: 1.35; }
+
+    .btn-save {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border: none;
+      border-radius: 8px;
+      color: #ffffff;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 6px;
+      box-shadow: 0 16px 36px rgba(99, 102, 241, 0.3);
+    }
+    .btn-save:hover { transform: translateY(-1px); box-shadow: 0 18px 46px rgba(99, 102, 241, 0.4); }
+    .btn-save:disabled { opacity: 0.65; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    #statusMsg {
+      margin-top: 12px;
+      min-height: 18px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 14px;
+      color: var(--text-secondary);
+      font-size: 13px;
+      text-decoration: none;
+    }
+    .back-link:hover { color: var(--accent); }
+
+    @media (max-width: 660px) {
+      .row { grid-template-columns: 1fr; }
+      .profile-card { padding: 24px; }
+    }
+    @keyframes drift {
+      from { transform: translate3d(0, 0, 0) scale(1); }
+      to { transform: translate3d(24px, -18px, 0) scale(1.08); }
+    }
+    @keyframes floatIn {
+      from { opacity: 0; transform: translateY(24px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <div class="profile-card">
+    <div class="profile-header">
+      <div class="profile-avatar" id="avatarPreview">U</div>
+      <h1 class="profile-title" id="pageTitle">Complete Your Profile</h1>
+      <p class="profile-subtitle">Choose role and team details</p>
+      <div class="completion-bar">
+        <div class="completion-label">Profile Completion</div>
+        <div class="completion-track">
+          <div class="completion-fill" id="completionFill" style="width: 0%;"></div>
+        </div>
+        <div class="completion-percent" id="completionPercent">0%</div>
+      </div>
+    </div>
+
+    <form id="profileForm" onsubmit="saveProfile(event)">
+      <div class="form-group">
+        <label for="name">Full Name *</label>
+        <input type="text" id="name" placeholder="Enter your name" required>
+      </div>
+
+      <div class="row">
+        <div class="form-group">
+          <label for="jobRole">Role *</label>
+          <select id="jobRole">
+            <option value="Member">Member</option>
+            <option value="Leader">Leader</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="company">Team Code *</label>
+          <div class="team-code-row">
+            <input type="text" id="company" placeholder="Enter team code">
+            <button type="button" id="teamCodeManagerBtn" class="btn-mini" onclick="openTeamCodeManager()">Manage Code</button>
+          </div>
+          <div class="field-help" id="teamCodeHelp">Members must enter a leader-provided team code.</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="title">Job Title</label>
+        <input type="text" id="title" placeholder="e.g., Senior Developer">
+      </div>
+
+      <div class="form-group">
+        <label for="bio">Bio</label>
+        <textarea id="bio" placeholder="Tell us about yourself..."></textarea>
+      </div>
+
+      <div class="row">
+        <div class="form-group">
+          <label for="location">Location</label>
+          <input type="text" id="location" placeholder="City, Country">
+        </div>
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" placeholder="your@email.com">
+        </div>
+      </div>
+
+      <button type="submit" class="btn-save" id="saveBtn">Save Profile</button>
+      <p id="statusMsg"></p>
+      <a href="index.html" class="back-link">Back to Login</a>
+    </form>
+  </div>
+
+  <script>
+    const supabaseClient = window.supabase;
+    const profileFields = ['name', 'jobRole', 'company', 'title', 'bio', 'location', 'email'];
+    const TEAM_CODE_DRAFT_KEY = 'collabrix-team-code-draft';
+    const LEADER_INTENT_KEY = 'collabrix-leader-intent';
+    const isNewProfileFlow = new URLSearchParams(window.location.search || '').get('new') === '1';
+
+    function normalizeRole(value) {
+      return String(value || '').toLowerCase() === 'leader' ? 'Leader' : 'Member';
+    }
+
+    function normalizeTeamCode(raw) {
+      return String(raw || '')
+        .toUpperCase()
+        .replace(/[^A-Z0-9-_]/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '')
+        .slice(0, 20);
+    }
+
+    function setStatus(text, type) {
+      const el = document.getElementById('statusMsg');
+      if (!el) return;
+      el.textContent = text || '';
+      if (type === 'error') el.style.color = 'var(--danger)';
+      else if (type === 'success') el.style.color = 'var(--ok)';
+      else if (type === 'warn') el.style.color = 'var(--warn)';
+      else el.style.color = 'var(--text-secondary)';
+    }
+
+    function syncAvatarInitial() {
+      const name = document.getElementById('name').value.trim();
+      document.getElementById('avatarPreview').textContent = (name[0] || 'U').toUpperCase();
+    }
+
+    function syncTeamCodeControls() {
+      const role = normalizeRole(document.getElementById('jobRole').value);
+      const input = document.getElementById('company');
+      const managerBtn = document.getElementById('teamCodeManagerBtn');
+      const help = document.getElementById('teamCodeHelp');
+      if (role === 'Leader') {
+        managerBtn.style.display = 'inline-block';
+        input.placeholder = 'Set team code or use Manage Code page';
+        help.textContent = 'Leaders can create/manage code in "Manage Code". Members use this code to access dashboard.';
+      } else {
+        managerBtn.style.display = 'none';
+        input.placeholder = 'Enter leader team code to join';
+        help.textContent = 'Members must enter a valid leader team code.';
+      }
+    }
+
+    function updateCompletion() {
+      let filled = 0;
+      const total = profileFields.length;
+      profileFields.forEach((field) => {
+        const el = document.getElementById(field);
+        if (el && String(el.value || '').trim() !== '') filled++;
+      });
+      const percent = Math.round((filled / total) * 100);
+      document.getElementById('completionFill').style.width = percent + '%';
+      document.getElementById('completionPercent').textContent = percent + '%';
+      syncAvatarInitial();
+    }
+
+    function loadFromLocalStorage() {
+      const fields = ['name', 'jobRole', 'company', 'title', 'bio', 'location', 'email'];
+      fields.forEach((field) => {
+        const key = 'profile' + field.charAt(0).toUpperCase() + field.slice(1);
+        const value = field === 'company'
+          ? (localStorage.getItem('profileTeamCode') || localStorage.getItem(key))
+          : localStorage.getItem(key);
+        if (!value) return;
+        const el = document.getElementById(field);
+        if (el && !el.value) el.value = value;
+      });
+    }
+
+    async function loadProfileData() {
+      if (!supabaseClient) {
+        setStatus('Supabase not available. Refresh and try again.', 'error');
+        return;
+      }
+      try {
+        const userRes = await supabaseClient.auth.getUser();
+        const user = userRes?.data?.user || null;
+        if (!user || !user.id) {
+          window.location.href = 'index.html';
+          return;
+        }
+
+        localStorage.setItem('profileUserId', user.id);
+        if (user.email) {
+          document.getElementById('email').value = user.email;
+          localStorage.setItem('profileEmail', user.email);
+        }
+
+        const profileRes = await supabaseClient
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        const profile = profileRes?.data || null;
+        if (profile) {
+          if (profile.full_name) document.getElementById('name').value = profile.full_name;
+          if (profile.job_role || profile.role) document.getElementById('jobRole').value = normalizeRole(profile.job_role || profile.role);
+          if (profile.company) document.getElementById('company').value = normalizeTeamCode(profile.company);
+          if (profile.job_title) document.getElementById('title').value = profile.job_title;
+          if (profile.bio) document.getElementById('bio').value = profile.bio;
+          if (profile.location) document.getElementById('location').value = profile.location;
+        }
+      } catch (err) {
+        console.warn('loadProfileData fallback local', err);
+      }
+
+      loadFromLocalStorage();
+      if (isNewProfileFlow) {
+        document.getElementById('pageTitle').textContent = 'Complete Profile Setup';
+        const subtitle = document.querySelector('.profile-subtitle');
+        if (subtitle) subtitle.textContent = 'Set role and team code';
+      }
+      const draftCode = normalizeTeamCode(localStorage.getItem(TEAM_CODE_DRAFT_KEY) || '');
+      const roleNow = normalizeRole(document.getElementById('jobRole').value);
+      if (roleNow === 'Leader' && draftCode && !document.getElementById('company').value) {
+        document.getElementById('company').value = draftCode;
+      }
+      syncTeamCodeControls();
+      updateCompletion();
+    }
+
+    function openTeamCodeManager() {
+      const role = normalizeRole(document.getElementById('jobRole').value);
+      if (role !== 'Leader') {
+        setStatus('Only leaders can open Team Code Manager.', 'warn');
+        return;
+      }
+      const draft = normalizeTeamCode(document.getElementById('company').value || '');
+      if (draft) localStorage.setItem(TEAM_CODE_DRAFT_KEY, draft);
+      localStorage.setItem('profileRole', 'Leader');
+      localStorage.setItem('profileJobRole', 'Leader');
+      localStorage.setItem(LEADER_INTENT_KEY, '1');
+      window.location.href = 'team-code.html?from=profile';
+    }
+
+    async function saveProfile(event) {
+      event.preventDefault();
+      setStatus('', 'info');
+
+      const saveBtn = document.getElementById('saveBtn');
+      saveBtn.textContent = 'Saving...';
+      saveBtn.disabled = true;
+
+      try {
+        const name = (document.getElementById('name').value || '').trim() || 'User';
+        const jobRole = normalizeRole(document.getElementById('jobRole').value);
+        const company = normalizeTeamCode(document.getElementById('company').value || '');
+        const title = (document.getElementById('title').value || '').trim();
+        const bio = (document.getElementById('bio').value || '').trim();
+        const location = (document.getElementById('location').value || '').trim();
+        const email = (document.getElementById('email').value || '').trim();
+        document.getElementById('company').value = company;
+
+        if (jobRole === 'Member' && !company) {
+          setStatus('Team Code is required for members.', 'error');
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Save Profile';
+          return;
+        }
+
+        const userRes = await supabaseClient.auth.getUser();
+        const user = userRes?.data?.user || null;
+        if (!user || !user.id) {
+          setStatus('Session expired. Login again.', 'error');
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Save Profile';
+          setTimeout(() => { window.location.href = 'index.html'; }, 700);
+          return;
+        }
+
+        const profileData = {
+          id: user.id,
+          full_name: name,
+          job_role: jobRole,
+          role: jobRole,
+          company: company || null
+        };
+        if (title) profileData.job_title = title;
+        if (bio) profileData.bio = bio;
+        if (location) profileData.location = location;
+
+        try {
+          await supabaseClient.from('profiles').insert([profileData]);
+        } catch (insertError) {
+          try {
+            await supabaseClient.from('profiles').update(profileData).eq('id', user.id);
+          } catch (updateError) {
+            console.warn('DB update skipped', updateError);
+          }
+        }
+
+        localStorage.setItem('profileCompleted', 'true');
+        localStorage.setItem('profileUserId', user.id);
+        localStorage.setItem('profileName', name);
+        localStorage.setItem('profileRole', jobRole);
+        localStorage.setItem('profileJobRole', jobRole);
+        if (email) localStorage.setItem('profileEmail', email);
+        if (title) localStorage.setItem('profileTitle', title); else localStorage.removeItem('profileTitle');
+        if (bio) localStorage.setItem('profileBio', bio); else localStorage.removeItem('profileBio');
+        if (location) localStorage.setItem('profileLocation', location); else localStorage.removeItem('profileLocation');
+        if (company) {
+          localStorage.setItem('profileCompany', company);
+          localStorage.setItem('profileTeamCode', company);
+          localStorage.setItem(TEAM_CODE_DRAFT_KEY, company);
+        } else {
+          localStorage.removeItem('profileCompany');
+          localStorage.removeItem('profileTeamCode');
+          localStorage.removeItem(TEAM_CODE_DRAFT_KEY);
+        }
+        localStorage.removeItem(LEADER_INTENT_KEY);
+
+        setStatus('Profile saved. Redirecting to login...', 'success');
+        saveBtn.textContent = 'Saved';
+        setTimeout(() => { window.location.href = 'index.html'; }, 600);
+      } catch (err) {
+        console.error('saveProfile failed', err);
+        setStatus('Could not save to DB. Saved locally and continuing.', 'warn');
+        try {
+          const name = (document.getElementById('name').value || '').trim() || 'User';
+          const role = normalizeRole(document.getElementById('jobRole').value);
+          const company = normalizeTeamCode(document.getElementById('company').value || '');
+          localStorage.setItem('profileName', name);
+          localStorage.setItem('profileRole', role);
+          localStorage.setItem('profileJobRole', role);
+          if (company) {
+            localStorage.setItem('profileCompany', company);
+            localStorage.setItem('profileTeamCode', company);
+            localStorage.setItem(TEAM_CODE_DRAFT_KEY, company);
+          }
+          localStorage.setItem('profileCompleted', 'true');
+          localStorage.removeItem(LEADER_INTENT_KEY);
+        } catch (ignore) {}
+        setTimeout(() => { window.location.href = 'index.html'; }, 700);
+      } finally {
+        saveBtn.disabled = false;
+        if (saveBtn.textContent !== 'Saved') saveBtn.textContent = 'Save Profile';
+      }
+    }
+
+    profileFields.forEach((field) => {
+      const el = document.getElementById(field);
+      if (!el) return;
+      el.addEventListener('input', updateCompletion);
+    });
+    document.getElementById('jobRole').addEventListener('change', () => {
+      syncTeamCodeControls();
+      updateCompletion();
+    });
+    document.getElementById('company').addEventListener('blur', (e) => {
+      e.target.value = normalizeTeamCode(e.target.value);
+      updateCompletion();
+    });
+
+    loadProfileData();
+    window.openTeamCodeManager = openTeamCodeManager;
+  </script>
+</body>
+</html>

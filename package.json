@@ -1,0 +1,13 @@
+{
+  "name": "collabrix",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'No build needed for static site'",
+    "start": "vercel dev"
+  },
+  "devDependencies": {
+    "vercel": "^32.0.0"
+  }
+}

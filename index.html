@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Collabrix Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep: #0f172a;
+      --bg-1: #1e293b;
+      --bg-2: #334155;
+      --card: rgba(15, 23, 42, 0.9);
+      --border: rgba(99, 102, 241, 0.2);
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --accent: #6366f1;
+      --accent2: #06b6d4;
+      --danger: #f43f5e;
+      --ok: #10b981;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+      background: 
+        radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.12) 0%, transparent 35%),
+        radial-gradient(circle at 85% 10%, rgba(6, 182, 212, 0.1) 0%, transparent 30%),
+        radial-gradient(circle at 50% 90%, rgba(16, 185, 129, 0.08) 0%, transparent 25%),
+        linear-gradient(160deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      color: var(--text);
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    body::before,
+    body::after {
+      content: '';
+      position: fixed;
+      width: 40rem;
+      height: 40rem;
+      border-radius: 999px;
+      filter: blur(100px);
+      pointer-events: none;
+      opacity: 0.25;
+      animation: drift 20s ease-in-out infinite alternate;
+    }
+    body::before {
+      top: -12rem;
+      right: -12rem;
+      background: rgba(99, 102, 241, 0.15);
+    }
+    body::after {
+      bottom: -14rem;
+      left: -14rem;
+      background: rgba(6, 182, 212, 0.12);
+      animation-duration: 25s;
+    }
+
+    .card {
+      background: linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.85));
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      padding: 34px;
+      border-radius: 26px;
+      width: 400px;
+      text-align: center;
+      box-shadow: 0 26px 80px rgba(0, 0, 0, 0.4), 0 0 40px rgba(99, 102, 241, 0.1);
+      backdrop-filter: blur(16px);
+      position: relative;
+      overflow: hidden;
+      animation: floatIn 0.65s ease-out both;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 0 0 auto;
+      height: 2px;
+      background: linear-gradient(90deg, rgba(99, 102, 241, 0), rgba(99, 102, 241, 0.9), rgba(6, 182, 212, 0));
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      font-size: 32px;
+    }
+
+    .tagline {
+      color: var(--muted);
+      margin: 0 0 18px;
+      font-size: 14px;
+    }
+
+    .input-group {
+      position: relative;
+      margin-top: 10px;
+    }
+
+    input {
+      width: 100%;
+      padding: 13px;
+      padding-right: 40px;
+      margin: 0;
+      border-radius: 12px;
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      background: rgba(15, 23, 42, 0.8);
+      color: var(--text);
+      font-size: 14px;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+    }
+
+    input:hover {
+      border-color: rgba(99, 102, 241, 0.35);
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+      transform: translateY(-1px);
+    }
+
+    .toggle-password {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 18px;
+      user-select: none;
+    }
+
+    .toggle-password:hover { color: var(--accent); }
+
+    #loginBtn {
+      width: 100%;
+      padding: 12px;
+      margin-top: 14px;
+      border-radius: 12px;
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      color: #ffffff;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      box-shadow: 0 16px 36px rgba(99, 102, 241, 0.3);
+    }
+
+    #loginBtn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 18px 46px rgba(99, 102, 241, 0.4);
+    }
+
+    #loginBtn:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .links {
+      margin-top: 14px;
+      display: grid;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .links a {
+      color: var(--accent2);
+      text-decoration: none;
+    }
+
+    .links a:hover { text-decoration: underline; }
+
+    #message {
+      margin-top: 14px;
+      font-size: 13px;
+      color: var(--muted);
+      min-height: 18px;
+      line-height: 1.35;
+    }
+    @keyframes drift {
+      from { transform: translate3d(0, 0, 0) scale(1); }
+      to { transform: translate3d(24px, -18px, 0) scale(1.08); }
+    }
+    @keyframes floatIn {
+      from { opacity: 0; transform: translateY(24px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="card" id="authCard">
+  <h1>Collabrix</h1>
+  <p class="tagline">Sign in to continue</p>
+
+  <input type="email" id="email" placeholder="Enter your email" autocomplete="email">
+  <div class="input-group">
+    <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password">
+    <span class="toggle-password" onclick="togglePassword('password')">&#128065;</span>
+  </div>
+
+  <button id="loginBtn">Login</button>
+
+  <div class="links">
+    <a href="signup.html">New user? Create account</a>
+    <a href="#" id="forgotLink">Forgot password?</a>
+  </div>
+
+  <p id="message"></p>
+</div>
+
+<script src="./vendor/supabase.umd.js"></script>
+<script src="./supabase.js"></script>
+<script>
+  var supabaseClient = window.supabase;
+  var MEMBER_TEAM_VERIFY_KEY = 'collabrix-member-team-verified';
+
+  function setMessage(text, color) {
+    var msg = document.getElementById('message');
+    if (!msg) return;
+    msg.style.color = color || 'var(--muted)';
+    msg.innerText = text || '';
+  }
+
+  function setBusy(isBusy) {
+    var loginBtn = document.getElementById('loginBtn');
+    if (loginBtn) loginBtn.disabled = !!isBusy;
+  }
+
+  function normalizeRole(value) {
+    return String(value || '').toLowerCase() === 'leader' ? 'Leader' : 'Member';
+  }
+
+  function normalizeTeamCode(raw) {
+    return String(raw || '')
+      .toUpperCase()
+      .replace(/[^A-Z0-9-_]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 20);
+  }
+
+  function ensureSupabaseClient() {
+    return supabaseClient !== null && typeof supabaseClient !== 'undefined';
+  }
+
+  function runWithSupabase(next) {
+    if (ensureSupabaseClient()) {
+      next();
+      return;
+    }
+    setMessage('Connecting to Supabase...', 'var(--muted)');
+    setTimeout(function() {
+      if (!ensureSupabaseClient()) {
+        setMessage('Supabase SDK failed to load. Check internet connection.', 'var(--danger)');
+        return;
+      }
+      next();
+    }, 500);
+  }
+
+  function getUserProfile(userId) {
+    return supabaseClient
+      .from('profiles')
+      .select('id, role, job_role, company, full_name')
+      .eq('id', userId)
+      .maybeSingle();
+  }
+
+  function getMemberVerifyToken(userId, teamCode) {
+    return userId + '::' + normalizeTeamCode(teamCode);
+  }
+
+  function storeProfileToLocal(profile, user) {
+    var finalRole = normalizeRole(profile && (profile.role || profile.job_role));
+    var teamCode = normalizeTeamCode((profile && profile.company) || localStorage.getItem('profileTeamCode') || '');
+    var name = (profile && profile.full_name) || localStorage.getItem('profileName') || ((user && user.email) ? user.email.split('@')[0] : 'User');
+    localStorage.setItem('profileRole', finalRole);
+    localStorage.setItem('profileJobRole', finalRole);
+    localStorage.setItem('profileName', name || 'User');
+    if (user && user.id) localStorage.setItem('profileUserId', user.id);
+    if (user && user.email) localStorage.setItem('profileEmail', user.email);
+    if (teamCode) {
+      localStorage.setItem('profileCompany', teamCode);
+      localStorage.setItem('profileTeamCode', teamCode);
+    }
+    return { role: finalRole, teamCode: teamCode };
+  }
+
+  function routeAfterAuth(user, profile, opts) {
+    var options = opts || {};
+    // After login, always go to team-access page for team code verification
+    // User already filled profile details during signup
+    if (!profile) {
+      if (user && user.id) localStorage.setItem('profileUserId', user.id);
+      if (user && user.email) localStorage.setItem('profileEmail', user.email);
+      // Even without profile, go to team-access to verify team code
+      sessionStorage.removeItem(MEMBER_TEAM_VERIFY_KEY);
+      window.location.href = 'team-access.html';
+      return;
+    }
+
+    var finalData = storeProfileToLocal(profile, user);
+    // Always require team code verification on login
+    sessionStorage.removeItem(MEMBER_TEAM_VERIFY_KEY);
+    window.location.href = 'team-access.html';
+  }
+
+  function togglePassword(inputId) {
+    var input = document.getElementById(inputId);
+    if (!input) return;
+    input.type = input.type === 'password' ? 'text' : 'password';
+  }
+
+  function showResetPasswordForm() {
+    var card = document.getElementById('authCard');
+    if (!card) return;
+    card.innerHTML =
+      '<h1>Reset Password</h1>' +
+      '<p class="tagline">Enter your new password below.</p>' +
+      '<div class="input-group">' +
+        '<input type="password" id="newPassword" placeholder="New password" onkeydown="if(event.key===\'Enter\')updatePassword()">' +
+        '<span class="toggle-password" onclick="togglePassword(\'newPassword\')">&#128065;</span>' +
+      '</div>' +
+      '<div class="input-group">' +
+        '<input type="password" id="confirmPassword" placeholder="Confirm new password" onkeydown="if(event.key===\'Enter\')updatePassword()">' +
+        '<span class="toggle-password" onclick="togglePassword(\'confirmPassword\')">&#128065;</span>' +
+      '</div>' +
+      '<button onclick="updatePassword()">Update Password</button>' +
+      '<p id="message"></p>';
+  }
+
+  function checkForResetToken() {
+    var hash = window.location.hash || '';
+    if (hash.indexOf('access_token') !== -1 && hash.indexOf('type=recovery') !== -1) {
+      showResetPasswordForm();
+      return true;
+    }
+    return false;
+  }
+
+  function updatePassword() {
+    setBusy(true);
+    runWithSupabase(function () {
+      var newPassword = (document.getElementById('newPassword') || {}).value || '';
+      var confirmPassword = (document.getElementById('confirmPassword') || {}).value || '';
+
+      if (!newPassword || newPassword.length < 6) {
+        setBusy(false);
+        setMessage('Password must be at least 6 characters', 'var(--danger)');
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        setBusy(false);
+        setMessage('Passwords do not match', 'var(--danger)');
+        return;
+      }
+
+      var params = new URLSearchParams((window.location.hash || '').replace(/^#/, ''));
+      var accessToken = params.get('access_token');
+      var refreshToken = params.get('refresh_token');
+
+      var applyUpdate = function () {
+        supabaseClient.auth.updateUser({ password: newPassword }).then(function (res) {
+          setBusy(false);
+          if (res.error) {
+            setMessage(res.error.message, 'var(--danger)');
+            return;
+          }
+          setMessage('Password updated. Redirecting to login...', 'var(--ok)');
+          setTimeout(function () { window.location.href = 'index.html'; }, 1200);
+        });
+      };
+
+      if (accessToken && refreshToken) {
+        supabaseClient.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken
+        }).then(applyUpdate).catch(function () {
+          setBusy(false);
+          setMessage('Could not verify reset session. Try reset link again.', 'var(--danger)');
+        });
+      } else {
+        applyUpdate();
+      }
+    });
+  }
+
+  function login() {
+    setBusy(true);
+    runWithSupabase(function () {
+      var email = ((document.getElementById('email') || {}).value || '').trim();
+      var password = (document.getElementById('password') || {}).value || '';
+
+      if (!email || !password) {
+        setBusy(false);
+        setMessage('Enter email and password.', 'var(--danger)');
+        return;
+      }
+
+      sessionStorage.removeItem(MEMBER_TEAM_VERIFY_KEY);
+      supabaseClient.auth.signInWithPassword({ email: email, password: password }).then(function (res) {
+        if (res.error) {
+          setBusy(false);
+          setMessage(res.error.message, 'var(--danger)');
+          return;
+        }
+        var user = res.data && res.data.user ? res.data.user : null;
+        if (!user || !user.id) {
+          setBusy(false);
+          setMessage('Login succeeded but session not found. Try again.', 'var(--danger)');
+          return;
+        }
+        setMessage('Login successful. Redirecting...', 'var(--ok)');
+        getUserProfile(user.id).then(function (profileRes) {
+          setBusy(false);
+          if (profileRes.error && profileRes.error.code !== 'PGRST116') {
+            setMessage('Could not load profile. Redirecting to team access...', 'var(--muted)');
+            sessionStorage.removeItem(MEMBER_TEAM_VERIFY_KEY);
+            setTimeout(function () { window.location.href = 'team-access.html'; }, 500);
+            return;
+          }
+          routeAfterAuth(user, profileRes.data, { forceTeamCode: true });
+        }).catch(function () {
+          setBusy(false);
+          setMessage('Could not read profile right now.', 'var(--danger)');
+        });
+      }).catch(function () {
+        setBusy(false);
+        setMessage('Could not login right now. Please try again.', 'var(--danger)');
+      });
+    });
+  }
+
+  function forgotPassword() {
+    setBusy(true);
+    runWithSupabase(function () {
+      var email = ((document.getElementById('email') || {}).value || '').trim();
+      if (!email) {
+        setBusy(false);
+        setMessage('Please enter your email first.', '#fbbf24');
+        return;
+      }
+      setMessage('Sending password reset email...', 'var(--muted)');
+      var redirectUrl = window.location.origin + '/index.html#type=recovery';
+      supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: redirectUrl }).then(function (res) {
+        setBusy(false);
+        if (res.error) {
+          setMessage(res.error.message, 'var(--danger)');
+          return;
+        }
+        setMessage('Password reset link sent. Check your email.', 'var(--ok)');
+      }).catch(function () {
+        setBusy(false);
+        setMessage('Could not send reset email. Please try again.', 'var(--danger)');
+      });
+    });
+  }
+
+  function bootstrapExistingSession() {
+    runWithSupabase(function () {
+      if (window.location.hash && window.location.hash.indexOf('type=recovery') !== -1) return;
+      supabaseClient.auth.getUser().then(function (res) {
+        var user = res.data ? res.data.user : null;
+        if (!user || !user.id) return;
+        getUserProfile(user.id).then(function (profileRes) {
+          if (profileRes.error && profileRes.error.code !== 'PGRST116') return;
+          // Always redirect to team-access on session restore for team code verification
+          sessionStorage.removeItem(MEMBER_TEAM_VERIFY_KEY);
+          storeProfileToLocal(profileRes.data, user);
+          window.location.href = 'team-access.html';
+        });
+      });
+    });
+  }
+
+  function bindEvents() {
+    var email = document.getElementById('email');
+    var password = document.getElementById('password');
+    var loginBtn = document.getElementById('loginBtn');
+    var forgotLink = document.getElementById('forgotLink');
+
+    var enterToLogin = function (event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        login();
+      }
+    };
+
+    if (email) email.addEventListener('keydown', enterToLogin);
+    if (password) password.addEventListener('keydown', enterToLogin);
+    if (loginBtn) loginBtn.addEventListener('click', function (e) { e.preventDefault(); login(); });
+    if (forgotLink) forgotLink.addEventListener('click', function (e) { e.preventDefault(); forgotPassword(); });
+  }
+
+  bindEvents();
+  checkForResetToken();
+  bootstrapExistingSession();
+
+  window.togglePassword = togglePassword;
+  window.updatePassword = updatePassword;
+  window.login = login;
+  window.forgotPassword = forgotPassword;
+</script>
+
+</body>
+</html>
